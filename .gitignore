@@ -2,5 +2,5 @@ common-files
 bin
 *.data
 pyclaw.log
-_output
+_output*
 _plots
