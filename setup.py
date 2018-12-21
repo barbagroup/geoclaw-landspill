@@ -17,6 +17,8 @@ import os
 import sys
 import time
 import functools
+import subprocess
+import textwrap
 
 # import urlretrieve based on the version of Python
 if sys.version_info.major == 2:
@@ -41,12 +43,12 @@ def reporthook(filename, count, block_size, total_size):
     progress_size = int(count*block_size)
     speed = int(progress_size/(1024*duration))
     percent = int(count*block_size*100/total_size)
-    sys.stdout.write(
-        "\rDownloading file {}".format(filename) +
+    print(
+        "\r* Downloading file {}".format(filename) +
         " -- [{:d}%, ".format(percent) +
         "{:d} MB, ".format(int(progress_size/(1024*1024))) +
         "{:d} KB/s, ".format(speed) +
-        "{:d} sec. passed]".format(int(duration)))
+        "{:d} sec. passed]".format(int(duration)), end="")
     sys.stdout.flush()
 
 def download_file(fname, furl, dpath):
@@ -62,17 +64,35 @@ def download_file(fname, furl, dpath):
     filepath = os.path.join(dpath, filename)
 
     if os.path.isfile(filepath):
-        sys.stdout.write("Downloading file {}".format(filename) +
-                         " -- already exists. Skip.\n")
+        print("* Downloading file {}".format(filename) +
+                         " -- already exists. Skip.")
     else:
         urlretrieve(fileurl, filepath+".tmp",
                     functools.partial(reporthook, filename))
         os.rename(filepath+".tmp", filepath)
-        sys.stdout.write(" -- done.\n")
+        print(" -- done.")
     sys.stdout.flush()
+
+def test_env_variables(var):
+    """Test environment variables"""
+
+    varpath = os.getenv(var)
+    if varpath is None:
+        print("\nError: environment variable " +
+              "{} not set.\n".format(var), file=sys.stderr)
+        sys.exit(1)
+    else:
+        print("* Environment variable {} is set to {}.".format(var, varpath))
 
 
 if __name__ == "__main__":
+
+    # check environment variables
+    print()
+    test_env_variables("CLAW")
+    test_env_variables("FC")
+    test_env_variables("PYTHONPATH")
+    print()
 
     # absolute path to this repository
     repo_path = os.path.dirname(os.path.abspath(__file__))
@@ -81,13 +101,12 @@ if __name__ == "__main__":
     file_dir = os.path.join(repo_path, "common-files")
 
     # create a folder for topo and hydro files
-    sys.stdout.write("Creating folder \"common-files\"")
+    print("* Creating folder \"common-files\"", end="")
     if not os.path.isdir(file_dir):
         os.mkdir(file_dir)
-        sys.stdout.write(" -- done.\n")
+        print(" -- done.")
     else:
-        sys.stdout.write(" -- already exists. Skip.\n")
-    sys.stdout.flush()
+        print(" -- already exists. Skip.")
 
     # download utah_dem_topo_3.txt
     filename = "utah_dem_topo_3.txt"
@@ -119,5 +138,49 @@ if __name__ == "__main__":
         "{}?dl=0".format(filename)
     download_file(filename, fileurl, file_dir)
 
-    print("Setup done.")
+    # create a folder for binary
+    bin_dir = os.path.join(repo_path, "bin")
+    print()
+    print("* Creating folder \"bin\"", end="")
+    if not os.path.isdir(bin_dir):
+        os.mkdir(bin_dir)
+        print(" -- done.")
+    else:
+        print(" -- already exists. Skip.")
+
+    # generate binary
+    print("* Generating binary executable of the solver", end="")
+    sys.stdout.flush()
+    job = subprocess.run(["make", "new"], capture_output=True)
+
+    try:
+        job.check_returncode()
+    except subprocess.CalledProcessError:
+        print(" -- FAILED!\n")
+        print('\u250F' + '\u2501'*70 + '\u2513')
+        print("\u2503" + " "*70 + "\u2503")
+        print("\u2503 THE COMPILATION AND BUILDING JOB " +
+              "FAILED DUE TO THE FOLLOWING REASON  \u2503")
+        print("\u2503" + " "*70 + "\u2503")
+        print('\u2523' + '\u2501'*70 + '\u252B')
+        print("\u2503" + " "*70 + "\u2503")
+
+        err = job.stderr.decode('UTF-8')
+        err = textwrap.wrap(err, width=68)
+        for e in err:
+            if len(e) < 68:
+                e = e + " " * (68-len(e))
+            print("\u2503 " + e + " \u2503")
+        print("\u2503" + " "*70 + "\u2503")
+        print('\u2517' + '\u2501'*70 + '\u251B' + "\n")
+
+        print("Setup failed and is exiting.", file=sys.stderr)
+        sys.exit(1)
+    except:
+        raise
+    else:
+        print(" -- done.")
+
+    # setup finished
+    print("\nSetup done.\n")
 
