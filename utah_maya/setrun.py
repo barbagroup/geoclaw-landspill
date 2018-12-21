@@ -108,7 +108,7 @@ def setrun(claw_pkg='geoclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 2
+    clawdata.output_style = 1
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
@@ -362,7 +362,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([3, 1, 5, 0., 1.e10, 'utah_dem_topo_3.txt'])
+    topo_data.topofiles.append([3, 1, 5, 0., 1.e10, '../common-files/utah_dem_topo_3.txt'])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
