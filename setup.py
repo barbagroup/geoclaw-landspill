@@ -151,7 +151,8 @@ if __name__ == "__main__":
     # generate binary
     print("* Generating binary executable of the solver", end="")
     sys.stdout.flush()
-    job = subprocess.run(["make", "new"], capture_output=True)
+    job = subprocess.run(["make", "new"],
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     try:
         job.check_returncode()
