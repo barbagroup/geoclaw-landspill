@@ -12,6 +12,8 @@ Plot topography and flow depth
 
 import os
 import sys
+import datetime
+import argparse
 import numpy
 import matplotlib
 from matplotlib import pyplot
@@ -66,7 +68,7 @@ def get_level_ncells_volumes(solution):
 
     return ncells, volumes
 
-def plot_at_axes(solution, ax, min_level=2, max_level=None,
+def plot_at_axes(solution, ax, border=False, min_level=2, max_level=None,
                  shift=[0., 0.], vmin=0, vmax=None, dry_tol=1e-4,
                  cmap=pyplot.cm.viridis):
     """
@@ -101,6 +103,10 @@ def plot_at_axes(solution, ax, min_level=2, max_level=None,
             shading='flat', edgecolors='None',
             vmin=vmin, vmax=vmax, cmap=cmap)
 
+        if border:
+            ax.plot([x[0], x[-1], x[-1], x[0], x[0]],
+                    [y[0], y[0], y[-1], y[-1], y[0]], 'k-', lw=2)
+
     try:
         return im
     except UnboundLocalError:
@@ -133,11 +139,13 @@ def plot_topo(topo, topo_min=None, topo_max=None, colormap=pyplot.cm.terrain):
 
     # set x and y ticks
     xticks = numpy.arange(topo.X.min()-topo.delta[0]/2, topo.X.max()+topo.delta[0]/2+49, 50)
+    xticks = xticks.round(2)
     xticks_loc = (xticks-xticks[0])/(topo.X.max()-topo.X.min()+topo.delta[0])*topo.Z.shape[1]
     ax_topo.set_xticks(xticks_loc)
     ax_topo.set_xticklabels(xticks, rotation=-45, ha="left")
 
     yticks = numpy.arange(topo.Y.min()-topo.delta[1]/2, topo.Y.max()+topo.delta[1]/2+49, 50)
+    yticks = yticks.round(2)
     yticks_loc = (yticks-yticks[0])/(topo.Y.max()-topo.Y.min()+topo.delta[1])*topo.Z.shape[0]
     ax_topo.set_yticks(yticks_loc)
     ax_topo.set_yticklabels(yticks)
@@ -157,7 +165,7 @@ def plot_topo(topo, topo_min=None, topo_max=None, colormap=pyplot.cm.terrain):
 
     return fig, ax_topo
 
-def plot_soln(topo, solndir, fno):
+def plot_soln(topo, solndir, fno, border=False, level=1):
     """Plot solutions."""
 
     # a new figure and topo ax
@@ -188,7 +196,8 @@ def plot_soln(topo, solndir, fno):
         fno, ncells, volumes))
 
     # plot
-    im = plot_at_axes(soln, ax, min_level=2,
+    im = plot_at_axes(soln, ax, border=border,
+                      min_level=level, max_level=level,
                       shift=[topo.X.min()-topo.delta[0]/2,
                              topo.Y.min()-topo.delta[1]/2],
                       dry_tol=1e-5)
@@ -219,15 +228,27 @@ def plot_soln(topo, solndir, fno):
 
 if __name__ == "__main__":
 
-    # help message
-    if sys.argv[1] == "--help" or sys.argv[1] == "-h":
-        print("Usage:")
-        print("\tpython plotdepths.py case_folder_name")
-        sys.exit(0)
+    # CMD argument parser
+    parser = argparse.ArgumentParser(description="Plot depth on topography.")
+
+    parser.add_argument('case', metavar='case', type=str,
+                        help='the name of the case')
+
+    parser.add_argument('--level', dest="level", action="store", type=int,
+                        help='plot depth result at a specific AMR level \
+                                (default: finest level)')
+
+    parser.add_argument('--continue', dest="restart", action="store_true",
+                        help='continue creating figures in existing _plot folder')
+
+    parser.add_argument('--border', dest="border", action="store_true",
+                        help='also plot the borders of grid patches')
+
+    # process arguments
+    args = parser.parse_args()
 
     # get case path
-    case = sys.argv[1]
-    casepath = os.path.abspath(case)
+    casepath = os.path.abspath(args.case)
 
     # get the abs path of the repo
     repopath = os.path.dirname(os.path.abspath(__file__))
@@ -255,6 +276,12 @@ if __name__ == "__main__":
     # folder of plots
     plotdir = os.path.join(casepath, "_plots")
     if not os.path.isdir(plotdir):
+        os.mkdir(plotdir)
+    elif not args.restart:
+        backup_plotdir = plotdir + "_" + \
+            str(datetime.datetime.now().replace(microsecond=0))
+        print("Moving existing _plot folder to {}".format(backup_plotdir))
+        os.rename(plotdir, backup_plotdir)
         os.mkdir(plotdir)
 
     # load setup.py
@@ -294,6 +321,10 @@ if __name__ == "__main__":
 
     frame_bg = 0
 
+    # process plot level
+    if args.level is None:
+        args.level = rundata.amrdata.amr_levels_max
+
     # read and plot solution with pyclaw
     for frameno in range(frame_bg, frame_ed):
 
@@ -302,7 +333,8 @@ if __name__ == "__main__":
             print("Frame No. {} exists. Skip.".format(frameno))
             continue
 
-        fig, ax = plot_soln(topo_crop, outputpath, frameno)
+        fig, ax = plot_soln(topo_crop, outputpath, frameno,
+                            args.border, args.level)
 
         # plot point source
         line = ax.plot(source_x-x_crop_bg, source_y-y_crop_bg, 'r.', markersize=10)
