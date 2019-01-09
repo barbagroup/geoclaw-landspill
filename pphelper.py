@@ -18,19 +18,33 @@ from clawpack.geoclaw import topotools
 from clawpack import pyclaw
 
 
-def get_max_depth(solution):
+def get_min_value(solution, field=0):
     """
-    Get the maximum dpeth.
+    Get the minimum value in a field in a solution.
     """
 
-    max_depth = 0.
+    min_val = 1e38
 
     for state in solution.states:
-        max_temp = state.q[0, :, :].max()
-        if max_temp > max_depth:
-            max_depth = max_temp
+        min_temp = state.q[field, :, :].min()
+        if min_temp < min_val:
+            min_val = min_temp
 
-    return max_depth
+    return min_val
+
+def get_max_value(solution, field=0):
+    """
+    Get the maximum value in a field in a solution.
+    """
+
+    max_val = 0.
+
+    for state in solution.states:
+        max_temp = state.q[field, :, :].max()
+        if max_temp > max_val:
+            max_val = max_temp
+
+    return max_val
 
 def get_max_AMR_level(solution):
     """
@@ -68,7 +82,7 @@ def get_level_ncells_volumes(solution):
 
 def plot_at_axes(solution, ax, field=0, border=False,
                  min_level=2, max_level=None, shift=[0., 0.],
-                 vmin=0, vmax=None, threshold=1e-4,
+                 vmin=None, vmax=None, threshold=1e-4,
                  cmap=pyplot.cm.viridis):
     """Plot solution.
 
@@ -95,8 +109,11 @@ def plot_at_axes(solution, ax, field=0, border=False,
         pyplot image object/handler, or None.
     """
 
+    if vmin is None:
+        vmin = get_min_value(solution, field)
+
     if vmax is None:
-        vmax = get_max_depth(solution)
+        vmax = get_max_value(solution, field)
 
     for state in solution.states:
         p = state.patch

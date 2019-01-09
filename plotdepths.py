@@ -66,17 +66,6 @@ if __name__ == "__main__":
               file=sys.stderr)
         sys.exit(1)
 
-    # folder of plots
-    plotdir = os.path.join(casepath, "_plots")
-    if not os.path.isdir(plotdir):
-        os.mkdir(plotdir)
-    elif not args.restart:
-        backup_plotdir = plotdir + "_" + \
-            str(datetime.datetime.now().replace(microsecond=0))
-        print("Moving existing _plot folder to {}".format(backup_plotdir))
-        os.rename(plotdir, backup_plotdir)
-        os.mkdir(plotdir)
-
     # load setup.py
     sys.path.insert(0, casepath) # add case folder to module search path
     import setrun # import the setrun.py
@@ -118,12 +107,24 @@ if __name__ == "__main__":
     if args.level is None:
         args.level = rundata.amrdata.amr_levels_max
 
+    # folder of plots
+    plotdir = os.path.join(casepath, "_plots/depths/level{:02}".format(args.level))
+    if not os.path.isdir(plotdir):
+        os.makedirs(plotdir)
+    elif not args.restart:
+        backup_plotdir = str(datetime.datetime.now().replace(microsecond=0))
+        backup_plotdir = backup_plotdir.replace("-", "").replace(" ", "_").replace(":", "")
+        backup_plotdir = plotdir + "_" + backup_plotdir
+        print("Moving existing _plot/depths folder to {}".format(backup_plotdir))
+        os.rename(plotdir, backup_plotdir)
+        os.mkdir(plotdir)
+
     # read and plot solution with pyclaw
     for frameno in range(frame_bg, frame_ed):
 
-        figpath = os.path.join(plotdir, "frame{:04d}.png".format(frameno))
+        figpath = os.path.join(plotdir, "depth{:04d}.png".format(frameno))
         if os.path.isfile(figpath):
-            print("Frame No. {} exists. Skip.".format(frameno))
+            print("Depth frame No. {} exists. Skip.".format(frameno))
             continue
 
         fig, ax = plot_depth(topo_crop, outputpath, frameno,
