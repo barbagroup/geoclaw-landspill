@@ -142,7 +142,7 @@ def plot_at_axes(solution, ax, field=0, border=False,
 
         if border:
             ax.plot([x[0], x[-1], x[-1], x[0], x[0]],
-                    [y[0], y[0], y[-1], y[-1], y[0]], 'k-', lw=2)
+                    [y[0], y[0], y[-1], y[-1], y[0]], 'k-', lw=1)
 
     try:
         return im
@@ -255,6 +255,140 @@ def plot_depth(topo, solndir, fno, border=False, level=1):
 
     # figure title
     fig.suptitle("Topography and depth near rupture point, "
+                 "T = {} (mins)".format(int(soln.state.t/60.)),
+                 x=0.5, y=0.9, fontsize=16,
+                 horizontalalignment="center",
+                 verticalalignment="bottom")
+
+    return fig, ax
+
+def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
+    """Plot the topology from solution (instead of from topo file)"""
+
+    # a new figure
+    fig = pyplot.figure(0, (11, 8), 90)
+
+    # create an axes at 1, 3, 1
+    ax = fig.add_axes([0.1, 0.125, 0.75, 0.75])
+
+    # empty solution object
+    soln = pyclaw.Solution()
+
+    # path
+    auxpath = os.path.join(solndir, "fort.a"+"{}".format(fno).zfill(4))
+
+    # determine whether to read aux
+    if os.path.isfile(auxpath):
+        aux = True
+    else:
+        aux = False
+
+    # read
+    soln.read(fno, solndir, file_format="binary", read_aux=aux)
+
+    print("Plotting frame No. {}, T={} secs ({} mins)".format(
+        fno, soln.state.t, int(soln.state.t/60.)))
+
+    # colormap min & max
+    topo_min = topo.Z.mean() - 2 * topo.Z.std()
+    topo_max = topo.Z.mean() + 2 * topo.Z.std()
+
+    # shift of physical coordinates to image pixel coordinates
+    shift = [topo.X.min()-topo.delta[0]/2, topo.Y.min()-topo.delta[1]/2]
+
+    # light source object
+    ls = matplotlib.colors.LightSource(315, 45)
+
+    # plot each patch on level 1
+    for state in soln.states:
+        p = state.patch
+
+        if p.level != 1:
+            continue
+
+        x, dx = numpy.linspace(p.lower_global[0], p.upper_global[0],
+                               p.num_cells_global[0]+1, retstep=True)
+        y, dy = numpy.linspace(p.lower_global[1], p.upper_global[1],
+                               p.num_cells_global[1]+1, retstep=True)
+
+        x -= shift[0]
+        y -= shift[1]
+
+        if aux:
+            data = state.aux[0, :, :]
+        else:
+            data = state.q[3, :, :] - state.q[0, :, :]
+
+        if shaded:
+            im = ax.imshow(
+                ls.shade(data.T, blend_mode='soft', vert_exag=3,
+                         dx=p.delta[0], dy=p.delta[1],
+                         vmin=topo_min, vmax=topo_max,
+                         cmap=pyplot.cm.terrain),
+                origin='lower',
+                extent=[x[0], x[-1], y[0], y[-1]])
+        else:
+            im = ax.pcolormesh(
+                x, y, data.T,
+                shading='flat', edgecolors='None',
+                vmin=topo_min, vmax=topo_max, cmap=pyplot.cm.terrain)
+
+        if level == 1 and border:
+            ax.plot([x[0], x[-1], x[-1], x[0], x[0]],
+                    [y[0], y[0], y[-1], y[-1], y[0]], 'k-', lw=1)
+
+    # plot each patch on target level
+    if level != 1:
+        for state in soln.states:
+            p = state.patch
+
+            if p.level != level:
+                continue
+
+            x, dx = numpy.linspace(p.lower_global[0], p.upper_global[0],
+                                   p.num_cells_global[0]+1, retstep=True)
+            y, dy = numpy.linspace(p.lower_global[1], p.upper_global[1],
+                                   p.num_cells_global[1]+1, retstep=True)
+
+            x -= shift[0]
+            y -= shift[1]
+
+            if aux:
+                data = state.aux[0, :, :]
+            else:
+                data = state.q[3, :, :] - state.q[0, :, :]
+
+            if shaded:
+                im = ax.imshow(
+                    ls.shade(data.T, blend_mode='soft', vert_exag=3,
+                             dx=p.delta[0], dy=p.delta[1],
+                             vmin=topo_min, vmax=topo_max,
+                             cmap=pyplot.cm.terrain),
+                    origin='lower',
+                    extent=[x[0], x[-1], y[0], y[-1]])
+            else:
+                im = ax.pcolormesh(
+                    x, y, data.T,
+                    shading='flat', edgecolors='None',
+                    vmin=topo_min, vmax=topo_max, cmap=pyplot.cm.terrain)
+
+            if border:
+                ax.plot([x[0], x[-1], x[-1], x[0], x[0]],
+                        [y[0], y[0], y[-1], y[-1], y[0]], 'k-', lw=1)
+
+    ax.set_xlim(0, topo.Z.shape[1])
+    ax.set_ylim(0, topo.Z.shape[0])
+
+    # plot colorbar in a new axes for depth
+    cbarax = fig.add_axes([0.875, 0.125, 0.03, 0.75])
+    im = ax.imshow(topo.Z, cmap=pyplot.cm.terrain,
+                   vmin=topo_min, vmax=topo_max, origin='lower')
+    im.remove()
+    cbar = pyplot.colorbar(im, cax=cbarax, ax=ax)
+    cbar.set_label("Elevation (m)")
+
+    # figure title
+    fig.suptitle("Topography data in AMR grid patches, "
                  "T = {} (mins)".format(int(soln.state.t/60.)),
                  x=0.5, y=0.9, fontsize=16,
                  horizontalalignment="center",
