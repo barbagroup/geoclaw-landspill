@@ -7,7 +7,7 @@ This repo contains a collection of land-spill simulation cases and utilities.
 ## I. Setting up
 
 
-### Option A: Using Docker image
+#### Option A: Using Docker image
 
 If choosing to use Docker image, the docker image is located at DockerHub
 `barbagroup/landspill:applications`. Everything needed is in the image.
