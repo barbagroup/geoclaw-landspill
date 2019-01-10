@@ -12,7 +12,9 @@ Helper functions for post-processing.
 
 import os
 import numpy
+import netCDF4
 import matplotlib
+import scipy.interpolate
 from matplotlib import pyplot
 from clawpack.geoclaw import topotools
 from clawpack import pyclaw
@@ -395,3 +397,122 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
                  verticalalignment="bottom")
 
     return fig, ax
+
+def get_bounding_box(solndir, bg, ed, level):
+    """
+    Get the bounding box of the result at a specific level.
+
+    Return:
+        [xleft, xright, ybottom, ytop]
+    """
+
+    xleft = None
+    xright = None
+    ybottom = None
+    ytop = None
+
+    for fno in range(bg, ed):
+
+        # path
+        auxpath = os.path.join(solndir, "fort.a"+"{}".format(fno).zfill(4))
+
+        # determine whether to read aux
+        if os.path.isfile(auxpath):
+            aux = True
+        else:
+            aux = False
+
+        # solution
+        soln = pyclaw.Solution()
+        soln.read(fno, solndir, file_format="binary", read_aux=aux)
+
+        # search through AMR grid patched in this solution
+        for state in soln.states:
+            p = state.patch
+
+            if p.level != level:
+                continue
+
+            if xleft is None:
+                xleft = p.lower_global[0]
+            elif p.lower_global[0] < xleft:
+                xleft = p.lower_global[0]
+
+            if ybottom is None:
+                ybottom = p.lower_global[1]
+            elif p.lower_global[1] < ybottom:
+                ybottom = p.lower_global[1]
+
+            if xright is None:
+                xright = p.upper_global[0]
+            elif p.upper_global[0] > xright:
+                xright = p.upper_global[0]
+
+            if ytop is None:
+                ytop = p.upper_global[1]
+            elif p.upper_global[1] > ytop:
+                ytop = p.upper_global[1]
+
+    # finally, return
+    return [xleft, xright, ybottom, ytop]
+
+def get_state_interpolator(state, field=0):
+    """
+    Get a Scipy interpolation object for a field on a AMR grid.
+    """
+
+    # the underlying patch in this state object
+    p = state.patch
+
+    # x, y arrays and also dx, dy for checking
+    x, dx = numpy.linspace(p.lower_global[0]+p.delta[0]/2.,
+                           p.upper_global[0]-p.delta[0]/2.,
+                           p.num_cells_global[0], retstep=True)
+    y, dy = numpy.linspace(p.lower_global[1]+p.delta[1]/2.,
+                           p.upper_global[1]-p.delta[1]/2.,
+                           p.num_cells_global[1], retstep=True)
+    assert numpy.abs(dx-p.delta[0]) < 1e-6, "{} {}".format(dx, p.delta[0])
+    assert numpy.abs(dy-p.delta[1]) < 1e-6, "{} {}".format(dy, p.delta[1])
+
+    # get the interpolation object
+    interp = scipy.interpolate.RectBivariateSpline(x, y, state.q[field, :, :],
+        [p.lower_global[0], p.upper_global[0], p.lower_global[1], p.upper_global[1]])
+
+    return interp
+
+def interpolate(solution, x_target, y_target,
+                field=0, shift=[0., 0.], level=1,
+                clip=True, clip_less=1e-7, nodatavalue=-9999.):
+    """
+    Do the interpolation.
+    """
+
+    # allocate space for interpolated results
+    values = numpy.zeros((y_target.size, x_target.size), dtype=numpy.float64)
+
+    # loop through all AMR grids
+    for state in solution.states:
+
+        p = state.patch
+
+        # only do subsequent jobs if this is at the target level
+        if p.level != level:
+            continue
+
+        # get the indices of the target coordinates that are inside this patch
+        xid = numpy.where((x_target>=p.lower_global[0])&(x_target<=p.upper_global[0]))[0]
+        yid = numpy.where((y_target>=p.lower_global[1])&(y_target<=p.upper_global[1]))[0]
+
+        # get interpolation object
+        interpolator = get_state_interpolator(state, field)
+
+        # if any target coordinate located in thie patch, do interpolation
+        if xid.size and yid.size:
+            values[yid[:, None], xid[None, :]] = \
+                interpolator(x_target[xid]-shift[0], y_target[yid]-shift[1]).T
+
+    # apply nodatavalue to a threshold
+    if clip:
+        values[values<clip_less] = nodatavalue
+
+    return values
