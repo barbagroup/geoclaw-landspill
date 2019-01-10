@@ -475,8 +475,19 @@ def get_state_interpolator(state, field=0):
     assert numpy.abs(dy-p.delta[1]) < 1e-6, "{} {}".format(dy, p.delta[1])
 
     # get the interpolation object
-    interp = scipy.interpolate.RectBivariateSpline(x, y, state.q[field, :, :],
-        [p.lower_global[0], p.upper_global[0], p.lower_global[1], p.upper_global[1]])
+    kx = 3
+    ky = 3
+
+    if x.size <= 3:
+        kx = x.size - 1
+
+    if y.size <= 3:
+        ky = y.size - 1
+
+    interp = scipy.interpolate.RectBivariateSpline(
+        x, y, state.q[field, :, :],
+        [p.lower_global[0], p.upper_global[0], p.lower_global[1], p.upper_global[1]],
+        kx=kx, ky=ky)
 
     return interp
 

@@ -4,3 +4,5 @@ bin
 pyclaw.log
 _output*
 _plots
+*.nc
+*.nc.aux.xml
