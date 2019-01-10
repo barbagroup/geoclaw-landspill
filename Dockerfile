@@ -12,6 +12,8 @@ RUN ln -snf /usr/share/zoneinfo/UTC /etc/localtime \
     gfortran-8 \
     python3 \
     python3-numpy \
+    python3-scipy \
+    python3-netcdf4 \
     python3-six \
     python3-matplotlib \
  && rm -rf /var/lib/apt/lists/* \
