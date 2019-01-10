@@ -4,7 +4,7 @@ geoclaw-landspill-cases
 This repo contains a collection of land-spill simulation cases and utilities.
 
 ------------------------------------------------------------------------
-## I. Setup
+## I. Setting up
 
 
 ### Option A: Using Docker image
@@ -40,7 +40,7 @@ If choosing to use Docker image, the docker image is located at DockerHub
    the solver.
 
 ------------------------------------------------------------------------
-## II. Run a case
+## II. Running a case
 
 Use the python script `run.py` to run a case in this repo. Usage:
 ```
@@ -58,7 +58,7 @@ Currently, there are nine cases:
 9. utah_maya_no_evaporation
 
 ------------------------------------------------------------------------
-## III. Visualize depth results with `matplotlib`
+## III. Visualizing depth results with `matplotlib`
 
 Use the python script `plotdepths.py` to visualize depth results at each
 output time. Usage:
@@ -81,7 +81,7 @@ if plotting the results from ***utah_hill_maya*** and without specifying a
 specific AMR level, then the plots will be in `utah_hill_maya/_plots/depth/level05`.
 
 ------------------------------------------------------------------------
-## IV. Create a NetCDF file with CF convention
+## IV. Creating a NetCDF file with CF convention
 
 The Python script `createnc.py` can be used to create a NetCDF file with 
 temporal depth data for a case. Usage:
