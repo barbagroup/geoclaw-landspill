@@ -9,7 +9,7 @@ that will be read in by the Fortran code.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import numpy as np
+import numpy
 
 
 #------------------------------
@@ -38,6 +38,11 @@ def setrun(claw_pkg='geoclaw'):
     # GeoClaw specific parameters:
     #------------------------------------------------------------------
     rundata = setgeo(rundata)
+
+    #------------------------------------------------------------------
+    # AmrClaw specific parameters:
+    #------------------------------------------------------------------
+    rundata = setamr(rundata)
 
     #------------------------------------------------------------------
     # Standard Clawpack parameters to be written to claw.data:
@@ -118,7 +123,7 @@ def setrun(claw_pkg='geoclaw'):
 
     elif clawdata.output_style == 2:
         # Specify a list of output times.
-        clawdata.output_times = [i*60. for i in range(0, 481)]
+        clawdata.output_times = [0., 1800.]
 
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
@@ -156,15 +161,21 @@ def setrun(claw_pkg='geoclaw'):
 
     # Initial time step for variable dt.
     # If dt_variable==0 then dt=dt_initial for all steps:
-    clawdata.dt_initial = 1e-6
+    dx = (clawdata.upper[0] - clawdata.lower[0]) / clawdata.num_cells[0]
+    dy = (clawdata.upper[1] - clawdata.lower[1]) / clawdata.num_cells[1]
+    dx /= numpy.prod(rundata.amrdata.refinement_ratios_x[:rundata.amrdata.amr_levels_max])
+    dy /= numpy.prod(rundata.amrdata.refinement_ratios_y[:rundata.amrdata.amr_levels_max])
+    vrate = rundata.landspill_data.point_sources.point_sources[0][-1][0]
+
+    clawdata.dt_initial = 0.3 * dx * dy / vrate
 
     # Max time step to be allowed if variable dt used:
     clawdata.dt_max = 4.0
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.95
-    clawdata.cfl_max = 1.0
+    clawdata.cfl_desired = 0.9
+    clawdata.cfl_max = 0.95
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 100000
@@ -251,11 +262,23 @@ def setrun(claw_pkg='geoclaw'):
         # and at the final time.
         clawdata.checkpt_interval = 5
 
+    return rundata
+    # end of function setrun
+    # ----------------------
 
-    # ---------------
-    # AMR parameters:
-    # ---------------
-    amrdata = rundata.amrdata
+
+#------------------------------
+def setamr(rundata):
+#------------------------------
+    """
+    Set AmrClaw specific runtime parameters
+    """
+
+    try:
+        amrdata = rundata.amrdata
+    except:
+        print("*** Error, this rundata has no amrdata attribute")
+        raise AttributeError("Missing amrdata attribute")
 
     # max number of refinement levels:
     amrdata.amr_levels_max = 2
@@ -282,11 +305,11 @@ def setrun(claw_pkg='geoclaw'):
 
     # width of buffer zone around flagged points:
     # (typically the same as regrid_interval so waves don't escape):
-    amrdata.regrid_buffer_width  = 3
+    amrdata.regrid_buffer_width  = 1
 
     # clustering alg. cutoff for (# flagged pts) / (total # of cells refined)
     # (closer to 1.0 => more small grids may be needed to cover flagged cells)
-    amrdata.clustering_cutoff = 0.700000
+    amrdata.clustering_cutoff = 0.80000
 
     # print info about each regridding up to this level:
     amrdata.verbosity_regrid = 0
@@ -317,8 +340,6 @@ def setrun(claw_pkg='geoclaw'):
     # rundata.gaugedata.gauges.append([])
 
     return rundata
-    # end of function setrun
-    # ----------------------
 
 
 #-------------------
@@ -354,6 +375,7 @@ def setgeo(rundata):
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-5
+    refinement_data.speed_tolerance = [1e-8]
     refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = 3
     refinement_data.variable_dt_refinement_ratios = True

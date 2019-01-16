@@ -72,8 +72,8 @@ def setrun(claw_pkg='geoclaw'):
 
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 50
-    clawdata.num_cells[1] = 50
+    clawdata.num_cells[0] = 200
+    clawdata.num_cells[1] = 200
 
     # ---------------
     # Size of system:
@@ -170,7 +170,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.dt_initial = 0.3 * dx * dy / vrate
 
     # Max time step to be allowed if variable dt used:
-    clawdata.dt_max = 5.0
+    clawdata.dt_max = 2.5
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
@@ -282,12 +282,12 @@ def setamr(rundata):
         raise AttributeError("Missing amrdata attribute")
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 5
+    amrdata.amr_levels_max = 2
 
     # List of refinement ratios at each level (length at least mxnest-1)
-    amrdata.refinement_ratios_x = [2, 2, 2, 2]
-    amrdata.refinement_ratios_y = [2, 2, 2, 2]
-    amrdata.refinement_ratios_t = [2, 2, 2, 2]
+    amrdata.refinement_ratios_x = [4]
+    amrdata.refinement_ratios_y = [4]
+    amrdata.refinement_ratios_t = [4]
 
 
     # Specify type of each aux variable in amrdata.auxtype.
@@ -302,11 +302,11 @@ def setamr(rundata):
     amrdata.flag2refine = True
 
     # steps to take on each level L between regriddings of level L+1:
-    amrdata.regrid_interval = 3
+    amrdata.regrid_interval = 1
 
     # width of buffer zone around flagged points:
     # (typically the same as regrid_interval so waves don't escape):
-    amrdata.regrid_buffer_width  = 5
+    amrdata.regrid_buffer_width  = 1
 
     # clustering alg. cutoff for (# flagged pts) / (total # of cells refined)
     # (closer to 1.0 => more small grids may be needed to cover flagged cells)
