@@ -39,6 +39,9 @@ include $(GEOLIB)/Makefile.geoclaw
 EXCLUDE_MODULES = \
 
 EXCLUDE_SOURCES = \
+	stepgrid.f \
+	flag2refine2.f90 \
+	update.f90
 
 # ----------------------------------------
 # List of custom sources for this program:
@@ -51,6 +54,9 @@ SOURCES = \
   $(CLAW)/riemann/src/rpn2_geoclaw.f \
   $(CLAW)/riemann/src/rpt2_geoclaw.f \
   $(CLAW)/riemann/src/geoclaw_riemann_utils.f \
+  $(CLAW)/geoclaw/src/2d/shallow/landspill/optimized/stepgrid.f \
+  $(CLAW)/geoclaw/src/2d/shallow/landspill/optimized/flag2refine2.f90 \
+  $(CLAW)/geoclaw/src/2d/shallow/landspill/optimized/update.f90 \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

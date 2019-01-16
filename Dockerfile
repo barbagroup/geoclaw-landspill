@@ -37,8 +37,8 @@ RUN git clone --branch v5.5.0 https://github.com/clawpack/clawpack.git \
  && $PYTHON setup.py git-dev \
  && cd geoclaw \
  && git remote add barbagroup https://github.com/barbagroup/geoclaw.git \
- && git fetch barbagroup pull/16/head:pr-16 \
- && git checkout pr-16
+ && git fetch barbagroup pull/17/head:pr-17 \
+ && git checkout pr-17
 
 # clone geoclaw-landspill-cases
 RUN cd /home/landspill \

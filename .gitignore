@@ -1,8 +1,8 @@
 common-files
 bin
 *.data
-pyclaw.log
 _output*
-_plots
+_plots*
 *.nc
 *.nc.aux.xml
+*.log
