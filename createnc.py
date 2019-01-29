@@ -190,6 +190,10 @@ if __name__ == "__main__":
     # variable attributes: mercator
     nc_mercator.grid_mapping_name = "mercator"
     nc_mercator.long_name = "CRS definition"
+    nc_mercator.longitude_of_projection_origin =0.0
+    nc_mercator.standard_parallel = 0.0
+    nc_mercator.false_easting = 0.0
+    nc_mercator.false_northing = 0.0
     nc_mercator.spatial_ref = \
         "PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\"," + \
             "GEOGCS[\"GCS_WGS_1984\"," + \
