@@ -14,10 +14,33 @@ import os
 import sys
 import datetime
 import argparse
-from pphelper import plot_depth
+import multiprocessing
 from matplotlib import pyplot
-from clawpack.geoclaw import topotools
+from pphelper import plot_depth, TopographyMod
 
+def plotting_task(inputs):
+    """A single task to create a single plot for multi-threading."""
+
+    plot_dir, no, topo, soln_dir, opts, point = inputs
+
+    fig_path = os.path.join(plot_dir, "depth{:04d}.png".format(no))
+    if os.path.isfile(fig_path):
+        print("Depth frame No. {} exists. Skip.".format(no))
+        return
+
+    figH, axH = plot_depth(topo, soln_dir, no, opts.border, opts.level)
+
+    # plot point source
+    lineH = axH.plot(point[0], point[1], 'r.', markersize=10)
+
+    # label
+    axH.legend(lineH, ["source"])
+
+    # save image
+    figH.savefig(fig_path, dpi=90)
+
+    # clear
+    pyplot.close(figH)
 
 if __name__ == "__main__":
 
@@ -36,6 +59,10 @@ if __name__ == "__main__":
 
     parser.add_argument('--border', dest="border", action="store_true",
                         help='also plot the borders of grid patches')
+
+    parser.add_argument('--nprocs', dest="nprocs", action="store", type=int,
+                        help='plot depth result at a specific AMR level \
+                                (default: half system threads)')
 
     # process arguments
     args = parser.parse_args()
@@ -80,7 +107,7 @@ if __name__ == "__main__":
 
     # read topo file
     topofilename = os.path.join(casepath, rundata.topo_data.topofiles[0][-1])
-    topo_raw = topotools.Topography()
+    topo_raw = TopographyMod()
     topo_raw.read(topofilename, topo_type=3)
     topo_crop = topo_raw.crop([x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed])
 
@@ -107,6 +134,10 @@ if __name__ == "__main__":
     if args.level is None:
         args.level = rundata.amrdata.amr_levels_max
 
+    # number of processes
+    if args.nprocs is None:
+        args.nprocs = 1
+
     # folder of plots
     plotdir = os.path.join(casepath, "_plots/depths/level{:02}".format(args.level))
     if not os.path.isdir(plotdir):
@@ -119,25 +150,16 @@ if __name__ == "__main__":
         os.rename(plotdir, backup_plotdir)
         os.mkdir(plotdir)
 
-    # read and plot solution with pyclaw
+    # location of the point
+    point_loc = [source_x-x_crop_bg, source_y-y_crop_bg]
+
+    # arg list for multiprocessing
+    arglist = []
+
+    # prepare arglist
     for frameno in range(frame_bg, frame_ed):
+        arglist.append((plotdir, frameno, topo_crop, outputpath, args, point_loc))
 
-        figpath = os.path.join(plotdir, "depth{:04d}.png".format(frameno))
-        if os.path.isfile(figpath):
-            print("Depth frame No. {} exists. Skip.".format(frameno))
-            continue
-
-        fig, ax = plot_depth(topo_crop, outputpath, frameno,
-                            args.border, args.level)
-
-        # plot point source
-        line = ax.plot(source_x-x_crop_bg, source_y-y_crop_bg, 'r.', markersize=10)
-
-        # label
-        legend = ax.legend(line, ["source"])
-
-        # save image
-        fig.savefig(figpath, dpi=90)
-
-        # clear
-        pyplot.close(fig)
+    # multiprocesses
+    p = multiprocessing.Pool(args.nprocs)
+    result = p.map(plotting_task, arglist)

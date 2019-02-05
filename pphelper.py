@@ -527,3 +527,80 @@ def interpolate(solution, x_target, y_target,
         values[values<clip_less] = nodatavalue
 
     return values
+
+class TopographyMod(topotools.Topography):
+    """A Topography class without lambda."""
+    def __init__(self, path=None, topo_func=None, topo_type=None,
+                 unstructured=False):
+        r"""Topography initialization routine.
+
+        See :class:`Topography` for more info.
+
+        """
+
+        # super(Topography, self).__init__()
+
+        self.path = path
+        self.topo_func = topo_func
+        self.topo_type = topo_type
+
+        self.unstructured = unstructured
+        self.no_data_value = -9999
+
+        # Data storage for only calculating array shapes when needed
+        self._z = None
+        self._Z = None
+        self._x = None
+        self._X = None
+        self._y = None
+        self._Y = None
+        self._extent = None
+        self._delta = None
+
+    def coordinate_transform(self, x, y):
+        return (x, y)
+
+    def crop(self, filter_region=None, coarsen=1):
+        r"""Crop region to *filter_region*
+
+        Create a new Topography object that is identical to this one but cropped
+        to the region specified by filter_region
+
+        :TODO:
+         - Currently this does not work for unstructured data, could in principle
+         - This could be a special case of in_poly although that routine could
+           leave the resulting topography as unstructured effectively.
+        """
+
+        if self.unstructured:
+            raise NotImplemented("*** Cannot currently crop unstructured topo")
+
+        if filter_region is None:
+            # only want to coarsen, so this is entire region:
+            filter_region = [self.x[0],self.x[-1],self.y[0],self.y[-1]]
+
+        # Find indices of region
+        region_index = [None, None, None, None]
+        region_index[0] = (self.x >= filter_region[0]).nonzero()[0][0]
+        region_index[1] = (self.x <= filter_region[1]).nonzero()[0][-1] + 1
+        region_index[2] = (self.y >= filter_region[2]).nonzero()[0][0]
+        region_index[3] = (self.y <= filter_region[3]).nonzero()[0][-1] + 1
+        newtopo = TopographyMod()
+
+        newtopo._x = self._x[region_index[0]:region_index[1]:coarsen]
+        newtopo._y = self._y[region_index[2]:region_index[3]:coarsen]
+
+        # Force regeneration of 2d coordinate arrays and extent if needed
+        newtopo._X = None
+        newtopo._Y = None
+        newtopo._extent = None
+
+        # Modify Z array as well
+        newtopo._Z = self._Z[region_index[2]:region_index[3]:coarsen,
+                          region_index[0]:region_index[1]:coarsen]
+
+        newtopo.unstructured = self.unstructured
+        newtopo.topo_type = self.topo_type
+
+        # print "Cropped to %s by %s array"  % (len(newtopo.x),len(newtopo.y))
+        return newtopo
