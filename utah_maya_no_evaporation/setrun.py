@@ -384,7 +384,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([3, 1, 5, 0., 1.e10, '../common-files/utah_dem_topo_3.txt'])
+    topo_data.topofiles.append([3, 1, 5, 0., 1.e10, '../common-files/salt_lake_1.asc'])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data

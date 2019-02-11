@@ -108,12 +108,6 @@ if __name__ == "__main__":
     else:
         print(" -- already exists. Skip.")
 
-    # download utah_dem_topo_3.txt
-    filename = "utah_dem_topo_3.txt"
-    fileurl = "https://dl.dropboxusercontent.com/s/hhpebow2s81yzgo/" +\
-        "{}?dl=0".format(filename)
-    download_file(filename, fileurl, file_dir)
-
     # download hydro_feature1.asc
     filename = "hydro_feature1.asc"
     fileurl = "https://dl.dropboxusercontent.com/s/02lbf2kg84b5sij/" +\
@@ -129,12 +123,6 @@ if __name__ == "__main__":
     # download hydro_feature3.asc
     filename = "hydro_feature3.asc"
     fileurl = "https://dl.dropboxusercontent.com/s/gs3g7amhatn9pxf/" +\
-        "{}?dl=0".format(filename)
-    download_file(filename, fileurl, file_dir)
-
-    # download mountain.asc
-    filename = "mountain.asc"
-    fileurl = "https://dl.dropboxusercontent.com/s/c21eg6yt90jll1r/" +\
         "{}?dl=0".format(filename)
     download_file(filename, fileurl, file_dir)
 
