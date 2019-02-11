@@ -35,9 +35,32 @@ If choosing to use Docker image, the docker image is located at DockerHub
      Fortran compilers.*
   3. `PYTHONPATH`: prepend `${CLAW}` to original `${PYTHONPATH}`.
 4. Download/pull this repo.
-5. Go to the folder of this repo and set it up through `$ python setup.py`.
+5. Install the prerequisites (see the next subsection)
+6. Go to the folder of this repo and set it up through `$ python setup.py`.
    This will download required data and compile a binary executable for
    the solver.
+
+#### Prerequisites
+
+1. [rasterio](https://github.com/mapbox/rasterio) (optional): used for automatic
+   downloading of topography files.
+2. [netCDF4](http://unidata.github.io/netcdf4-python/) (optional): used in the
+   script `createnc.py`.
+3. [numpy](http://www.numpy.org/) (required)
+4. [scipy](https://www.scipy.org/) (optional): used in the script `createnc.py`.
+5. [matplotlit](https://matplotlib.org/) (optiona): used in `plotdepths.py` and
+   `plottopos.py`.
+
+For users using [Anaconda](https://www.anaconda.com/), the following commands
+are for installing the prerequisites in shell (Linux) or CMD (Windows):
+
+```
+$ conda install numpy
+$ conda install scipy
+$ conda install matplotlib
+$ conda install rasterio
+$ conda install netcdf4
+```
 
 ------------------------------------------------------------------------
 ## II. Running a case
