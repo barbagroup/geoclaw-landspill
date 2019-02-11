@@ -50,6 +50,8 @@ If choosing to use Docker image, the docker image is located at DockerHub
 4. [scipy](https://www.scipy.org/) (optional): used in the script `createnc.py`.
 5. [matplotlit](https://matplotlib.org/) (optiona): used in `plotdepths.py` and
    `plottopos.py`.
+6. [requests](http://docs.python-requests.org/en/master/) (optional): used for 
+   automatic downloading of topography files
 
 For users using [Anaconda](https://www.anaconda.com/), the following commands
 are for installing the prerequisites in shell (Linux) or CMD (Windows):
@@ -60,6 +62,7 @@ $ conda install scipy
 $ conda install matplotlib
 $ conda install rasterio
 $ conda install netcdf4
+$ conda install requests
 ```
 
 ------------------------------------------------------------------------

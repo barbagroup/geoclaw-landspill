@@ -16,7 +16,10 @@ RUN ln -snf /usr/share/zoneinfo/UTC /etc/localtime \
     python3-netcdf4 \
     python3-six \
     python3-matplotlib \
+    python3-rasterio \
+    python3-requests \
  && rm -rf /var/lib/apt/lists/* \
+ && rm /usr/bin/python \
  && ln -s /usr/bin/python3 /usr/bin/python \
  && useradd -ms /bin/bash landspill
 
