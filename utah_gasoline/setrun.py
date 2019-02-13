@@ -83,7 +83,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_eqn = 3
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 1
+    clawdata.num_aux = 2
 
     # Index of aux array corresponding to capacity function, if there is one:
     clawdata.capa_index = 0
@@ -293,7 +293,7 @@ def setamr(rundata):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center']
+    amrdata.aux_type = ['center', 'center']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -426,6 +426,10 @@ def setgeo(rundata):
     darcy_weisbach_data.friction_tol = 1e6
     darcy_weisbach_data.default_roughness = 0.0
     darcy_weisbach_data.filename = "roughness.txt"
+
+    # hydrological features
+    hydro_feature_data = landspill.hydro_features
+    hydro_feature_data.files.append("../common-files/hydro1.asc")
 
     # Evaporation
     evaporation_data = landspill.evaporation

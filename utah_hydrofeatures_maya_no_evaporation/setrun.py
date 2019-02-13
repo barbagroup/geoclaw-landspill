@@ -428,9 +428,7 @@ def setgeo(rundata):
 
     # hydrological features
     hydro_feature_data = landspill.hydro_features
-    hydro_feature_data.files.append("../common-files/hydro_feature1.asc")
-    hydro_feature_data.files.append("../common-files/hydro_feature2.asc")
-    hydro_feature_data.files.append("../common-files/hydro_feature3.asc")
+    hydro_feature_data.files.append("../common-files/hydro2.asc")
 
     # Evaporation
     evaporation_data = landspill.evaporation

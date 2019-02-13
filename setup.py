@@ -6,72 +6,12 @@
 #
 # Distributed under terms of the MIT license.
 
-"""Set up the cases.
-
-Most of the cases require topography files and files describing hydrologic
-features. The sizes of these files are not small, and hence they are not
-included in this repository. Use this script to download all necessary files so the
-cases are complete.
-"""
+"""Compile and build GeoClaw solver binary."""
 import os
 import sys
-import time
-import functools
 import subprocess
 import textwrap
 
-# import urlretrieve based on the version of Python
-if sys.version_info.major == 2:
-    from urllib import urlretrieve
-elif sys.version_info.major == 3:
-    from urllib.request import urlretrieve
-else:
-    raise ImportError("Unknown Python version.")
-
-
-def reporthook(filename, count, block_size, total_size):
-    """Progress bar
-
-    This code is modified base on the following code snippet:
-    https://blog.shichao.io/2012/10/04/progress_speed_indicator_for_urlretrieve_in_python.html
-    """
-    global start_time
-    if count == 0:
-        start_time = time.time()
-        return
-    duration = time.time() - start_time
-    progress_size = int(count*block_size)
-    speed = int(progress_size/(1024*duration))
-    percent = int(count*block_size*100/total_size)
-    print(
-        "\r* Downloading file {}".format(filename) +
-        " -- [{:d}%, ".format(percent) +
-        "{:d} MB, ".format(int(progress_size/(1024*1024))) +
-        "{:d} KB/s, ".format(speed) +
-        "{:d} sec. passed]".format(int(duration)), end="")
-    sys.stdout.flush()
-
-def download_file(fname, furl, dpath):
-    """Download a file from a given URL
-
-    Args:
-        fname [in]: name of the file.
-        furl: [in]: URL of the file.
-        dpath [in]: the absolute path of the directory where the downloaded
-                    file will go to.
-    """
-
-    filepath = os.path.join(dpath, filename)
-
-    if os.path.isfile(filepath):
-        print("* Downloading file {}".format(filename) +
-                         " -- already exists. Skip.")
-    else:
-        urlretrieve(fileurl, filepath+".tmp",
-                    functools.partial(reporthook, filename))
-        os.rename(filepath+".tmp", filepath)
-        print(" -- done.")
-    sys.stdout.flush()
 
 def test_env_variables(var):
     """Test environment variables"""
@@ -83,7 +23,6 @@ def test_env_variables(var):
         sys.exit(1)
     else:
         print("* Environment variable {} is set to {}.".format(var, varpath))
-
 
 if __name__ == "__main__":
 
@@ -107,24 +46,6 @@ if __name__ == "__main__":
         print(" -- done.")
     else:
         print(" -- already exists. Skip.")
-
-    # download hydro_feature1.asc
-    filename = "hydro_feature1.asc"
-    fileurl = "https://dl.dropboxusercontent.com/s/02lbf2kg84b5sij/" +\
-        "{}?dl=0".format(filename)
-    download_file(filename, fileurl, file_dir)
-
-    # download hydro_feature2.asc
-    filename = "hydro_feature2.asc"
-    fileurl = "https://dl.dropboxusercontent.com/s/mh8eh7wx6jy1z2t/" +\
-        "{}?dl=0".format(filename)
-    download_file(filename, fileurl, file_dir)
-
-    # download hydro_feature3.asc
-    filename = "hydro_feature3.asc"
-    fileurl = "https://dl.dropboxusercontent.com/s/gs3g7amhatn9pxf/" +\
-        "{}?dl=0".format(filename)
-    download_file(filename, fileurl, file_dir)
 
     # create a folder for binary
     bin_dir = os.path.join(repo_path, "bin")
@@ -172,4 +93,3 @@ if __name__ == "__main__":
 
     # setup finished
     print("\nSetup done.\n")
-
