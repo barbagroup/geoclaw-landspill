@@ -11,17 +11,14 @@ RUN ln -snf /usr/share/zoneinfo/UTC /etc/localtime \
     ca-certificates \
     gfortran-8 \
     python3 \
-    python3-numpy \
-    python3-scipy \
-    python3-netcdf4 \
-    python3-six \
-    python3-matplotlib \
-    python3-rasterio \
-    python3-requests \
+    python3-pip \
  && rm -rf /var/lib/apt/lists/* \
- && rm /usr/bin/python \
  && ln -s /usr/bin/python3 /usr/bin/python \
  && useradd -ms /bin/bash landspill
+
+# use pip to install required packages
+RUN pip3 install -I numpy==1.15.4 scipy==1.2.0 netcdf4==1.4.2 six==1.12.0 \ 
+    matplotlib==3.0.2 rasterio==1.0.13 requests==2.21.0
 
 # change user to landspill
 USER landspill
