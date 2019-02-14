@@ -106,6 +106,9 @@ def obtain_geotiff(extent, filename, res=1, source="3DEP", token=None):
     # add token to parameters if using ESRI
     if source == "ESRI":
         dem_query["token"] = token
+    else:
+        dem_query["mosaicRule"] = \
+            "{\"mosaicMethod\":\"esriMosaicAttribute\",\"sortField\":\"AcquisitionDate\"}"
 
     # use GET to get response
     dem_response = requests.get(dem_server, stream=True, params=dem_query)
