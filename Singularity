@@ -1,7 +1,7 @@
 # vim:ft=singularity
 
 # the base image is ubuntu 18.04 
-Bootstrap: library
+Bootstrap: docker
 From: ubuntu:18.04
 
 # environment variablae DURING RUNTIME
