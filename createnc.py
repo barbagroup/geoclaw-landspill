@@ -108,7 +108,9 @@ if __name__ == "__main__":
         args.level = rundata.amrdata.amr_levels_max
 
     # NC file path and name
-    ncfilename = os.path.join(casepath, "{}_level{:02}.nc".format(args.case, args.level))
+    ncfilename = os.path.join(
+        casepath, "{}_level{:02}.nc".format(
+            os.path.basename(args.case), args.level))
 
     # find bounding box we're going to use for NC data
     xleft, xright, ybottom, ytop = get_bounding_box(
