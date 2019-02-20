@@ -28,7 +28,9 @@ def plotting_task(inputs):
         print("Depth frame No. {} exists. Skip.".format(no))
         return
 
-    figH, axH = plot_depth(topo, soln_dir, no, opts.border, opts.level)
+    figH, axH = plot_depth(
+        topo, soln_dir, no, opts.border, opts.level, opts.dry_tol,
+        opts.cmin, opts.cmax)
 
     # plot point source
     lineH = axH.plot(
@@ -56,6 +58,18 @@ if __name__ == "__main__":
     parser.add_argument('--level', dest="level", action="store", type=int,
                         help='plot depth result at a specific AMR level \
                                 (default: finest level)')
+
+    parser.add_argument('--dry-tol', dest="dry_tol", action="store", type=float,
+                        help='tolerance for dry state (default: ' +
+                                'obtained from setrun.py)')
+
+    parser.add_argument('--cmax', dest="cmax", action="store", type=float,
+                        help='maximum value in the depth colorbar (default: ' +
+                                'obtained from solution)')
+
+    parser.add_argument('--cmin', dest="cmin", action="store", type=float,
+                        help='minimum value in the depth colorbar (default: ' +
+                                'obtained from solution)')
 
     parser.add_argument('--continue', dest="restart", action="store_true",
                         help='continue creating figures in existing _plot folder')
@@ -136,6 +150,10 @@ if __name__ == "__main__":
     # process plot level
     if args.level is None:
         args.level = rundata.amrdata.amr_levels_max
+
+    # process dry_tol
+    if args.dry_tol is None:
+        args.dry_tol = rundata.geo_data.dry_tolerance
 
     # number of processes
     if args.nprocs is None:

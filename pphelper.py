@@ -183,23 +183,9 @@ def plot_topo(topo, topo_min=None, topo_max=None, colormap=pyplot.cm.terrain):
             dx=1, dy=1, vmin=topo_min, vmax=topo_max, cmap=colormap),
         origin='lower')
 
-    # set x and y ticks
-    xticks = numpy.arange(topo.X.min()-topo.delta[0]/2, topo.X.max()+topo.delta[0]/2+49, 50)
-    xticks = xticks.round(2)
-    xticks_loc = (xticks-xticks[0])/(topo.X.max()-topo.X.min()+topo.delta[0])*topo.Z.shape[1]
-    ax_topo.set_xticks(xticks_loc)
-    ax_topo.set_xticklabels(xticks, rotation=-45, ha="left")
-
-    yticks = numpy.arange(topo.Y.min()-topo.delta[1]/2, topo.Y.max()+topo.delta[1]/2+49, 50)
-    yticks = yticks.round(2)
-    yticks_loc = (yticks-yticks[0])/(topo.Y.max()-topo.Y.min()+topo.delta[1])*topo.Z.shape[0]
-    ax_topo.set_yticks(yticks_loc)
-    ax_topo.set_yticklabels(yticks)
-
     # x, y labels
     ax_topo.set_xlabel("x coordinates (m)")
     ax_topo.set_ylabel("y coordinates (m)")
-
 
     # plot colorbar in a new axes for topography
     cbarax = fig.add_axes([0.775, 0.125, 0.03, 0.75])
@@ -211,7 +197,8 @@ def plot_topo(topo, topo_min=None, topo_max=None, colormap=pyplot.cm.terrain):
 
     return fig, ax_topo
 
-def plot_depth(topo, solndir, fno, border=False, level=1):
+def plot_depth(topo, solndir, fno, border=False, level=1,
+               dry_tol=1e-5, vmin=None, vmax=None):
     """Plot depth on topography."""
 
     # a new figure and topo ax
@@ -244,11 +231,23 @@ def plot_depth(topo, solndir, fno, border=False, level=1):
     # plot
     im = plot_at_axes(soln, ax, topo.Z.shape[-1::-1], field=0, border=border,
                       min_level=level, max_level=level,
-                      extent=topo.extent,
-                      threshold=1e-5)
+                      extent=topo.extent, vmin=vmin, vmax=vmax,
+                      threshold=dry_tol)
 
     ax.set_xlim(0, topo.Z.shape[1])
     ax.set_ylim(0, topo.Z.shape[0])
+
+    xticks_loc = ax.get_xticks()
+    xticks = numpy.array(
+        [i/topo.Z.shape[1]*(topo.extent[1]-topo.extent[0])+topo.extent[0]
+         for i in xticks_loc]).round(2)
+    ax.set_xticklabels(xticks, rotation=-45, ha="left")
+
+    yticks_loc = ax.get_yticks()
+    yticks = numpy.array(
+        [i/topo.Z.shape[0]*(topo.extent[3]-topo.extent[2])+topo.extent[1]
+         for i in yticks_loc]).round(2)
+    ax.set_yticklabels(yticks)
 
     # plot colorbar in a new axes for depth
     cbarax = fig.add_axes([0.875, 0.125, 0.03, 0.75])
