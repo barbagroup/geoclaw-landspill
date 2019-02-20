@@ -1,0 +1,95 @@
+# vim:ft=dockerfile
+
+# the base image is ubuntu
+FROM ubuntu:trusty
+
+# create basic working environment
+RUN ln -snf /usr/share/zoneinfo/UTC /etc/localtime \
+ && echo UTC > /etc/timezone \ 
+ && gpg --keyserver keyserver.ubuntu.com \
+        --recv-key 60C317803A41BA51845E371A1E9377A2BA9EF27F \
+ && gpg --export --armor 60C317803A41BA51845E371A1E9377A2BA9EF27F | apt-key add - \
+ && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu trusty main" \
+        >> /etc/apt/sources.list \
+ && echo "deb-src http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu trusty main" \
+        >> /etc/apt/sources.list \
+ && apt-get update \
+ && apt-get -y --no-install-recommends install ca-certificates wget bzip2 gfortran-8 \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm /bin/sh \
+ && ln -s /bin/bash /bin/sh
+
+# download miniconda installation shell script
+RUN wget --quiet \
+        https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        -O /opt/miniconda.sh \
+ && /bin/bash /opt/miniconda.sh -b -p /opt/conda \
+ && rm /opt/miniconda.sh \
+ && /opt/conda/bin/conda clean -tipsy \
+ && ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh \
+ && . /opt/conda/etc/profile.d/conda.sh \
+ && conda activate base \
+ && conda install -y -q python=3.6 make ca-certificates git \
+ && pip install numpy==1.15.4 scipy==1.2.0 netcdf4==1.4.2 six==1.12.0 \
+        matplotlib==3.0.2 requests==2.21.0 rasterio==1.0.13 \
+ && conda clean -tipsy
+
+# set up necessary environment variables
+ENV PYTHON=python \
+    FC=gfortran-8 \
+    CLAW=/opt/clawpack \
+    PYTHONPATH=/opt/clawpack \
+    MPLBACKEND=agg \
+    PATH=/opt/geoclaw-landspill-cases:$PATH
+
+# clone clawpack and its submodules
+RUN . /opt/conda/etc/profile.d/conda.sh \
+ && conda activate base \
+ && cd /opt \
+ && git clone --branch v5.5.0 https://github.com/clawpack/clawpack.git \
+ && cd clawpack \
+ && $PYTHON setup.py git-dev \
+ && cd geoclaw \
+ && git remote add barbagroup https://github.com/barbagroup/geoclaw.git \
+ && git fetch barbagroup pull/17/head:pr-17 \
+ && git checkout pr-17
+
+# clone geoclaw-landspill-cases
+RUN . /opt/conda/etc/profile.d/conda.sh \
+ && conda activate base \
+ && cd /opt \
+ && git clone https://github.com/barbagroup/geoclaw-landspill-cases.git \
+ && cd geoclaw-landspill-cases \
+ && $PYTHON setup.py
+
+# force both login/non-login sessions use conda environment by default
+RUN sed -i "1s/^/conda\ activate\ base\n/" /etc/profile \
+ && sed -i "1s/^/\.\ \/opt\/conda\/etc\/profile\.d\/conda\.sh\n/" /etc/profile \
+ && sed -i "1s/^/conda\ activate\ base\n/" /etc/bash.bashrc \
+ && sed -i "1s/^/\.\ \/opt\/conda\/etc\/profile\.d\/conda\.sh\n/" /etc/bash.bashrc
+
+# add a new non-root user and copy example case folders
+RUN useradd -ms /bin/bash landspill \
+ && mkdir /home/landspill/landspill-examples \
+ && cp -r \
+        /opt/geoclaw-landspill-cases/utah_gasoline \
+        /opt/geoclaw-landspill-cases/utah_gasoline_no_evaporation \
+        /opt/geoclaw-landspill-cases/utah_hill_maya \
+        /opt/geoclaw-landspill-cases/utah_hydrofeatures_gasoline \
+        /opt/geoclaw-landspill-cases/utah_hydrofeatures_gasoline_no_evaporation \
+        /opt/geoclaw-landspill-cases/utah_hydrofeatures_maya \
+        /opt/geoclaw-landspill-cases/utah_hydrofeatures_maya_no_evaporation \
+        /opt/geoclaw-landspill-cases/utah_maya \
+        /opt/geoclaw-landspill-cases/utah_maya_no_evaporation \
+        /home/landspill/landspill-examples \
+ && chown landspill:landspill -R /home/landspill/landspill-examples
+
+# change user to landspill
+USER landspill
+WORKDIR /home/landspill
+
+# entry point
+ENTRYPOINT ["/bin/bash", "-lc"]
+
+# default command
+CMD ["/bin/bash"]
