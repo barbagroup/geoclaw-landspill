@@ -82,8 +82,8 @@ def get_level_ncells_volumes(solution):
 
     return ncells, volumes
 
-def plot_at_axes(solution, ax, field=0, border=False,
-                 min_level=2, max_level=None, shift=[0., 0.],
+def plot_at_axes(solution, ax, size, field=0, border=False,
+                 min_level=2, max_level=None, extent=[0., 1., 0., 1.],
                  vmin=None, vmax=None, threshold=1e-4,
                  cmap=pyplot.cm.viridis):
     """Plot solution.
@@ -134,8 +134,15 @@ def plot_at_axes(solution, ax, field=0, border=False,
         assert numpy.abs(dx-p.delta[0]) < 1e-6, "{} {}".format(dx, p.delta[0])
         assert numpy.abs(dy-p.delta[1]) < 1e-6, "{} {}".format(dy, p.delta[1])
 
-        x -= shift[0]
-        y -= shift[1]
+        Lx = extent[1] - extent[0]
+        Ly = extent[3] - extent[2]
+
+        x -= extent[0]
+        x /= Lx
+        x *= size[0]
+        y -= extent[2]
+        y /= Ly
+        y *= size[1]
 
         im = ax.pcolormesh(
             x, y, numpy.ma.masked_less(state.q[field, :, :], threshold).T,
@@ -235,10 +242,9 @@ def plot_depth(topo, solndir, fno, border=False, level=1):
         fno, ncells, volumes))
 
     # plot
-    im = plot_at_axes(soln, ax, field=0, border=border,
+    im = plot_at_axes(soln, ax, topo.Z.shape[-1::-1], field=0, border=border,
                       min_level=level, max_level=level,
-                      shift=[topo.X.min()-topo.delta[0]/2,
-                             topo.Y.min()-topo.delta[1]/2],
+                      extent=topo.extent,
                       threshold=1e-5)
 
     ax.set_xlim(0, topo.Z.shape[1])

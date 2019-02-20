@@ -31,7 +31,10 @@ def plotting_task(inputs):
     figH, axH = plot_depth(topo, soln_dir, no, opts.border, opts.level)
 
     # plot point source
-    lineH = axH.plot(point[0], point[1], 'r.', markersize=10)
+    lineH = axH.plot(
+        point[0]*topo.Z.shape[1]/(topo.extent[1]-topo.extent[0]),
+        point[1]*topo.Z.shape[0]/(topo.extent[3]-topo.extent[2]),
+        'r.', markersize=10)
 
     # label
     axH.legend(lineH, ["source"])
@@ -151,7 +154,7 @@ if __name__ == "__main__":
         os.mkdir(plotdir)
 
     # location of the point
-    point_loc = [source_x-x_crop_bg, source_y-y_crop_bg]
+    point_loc = [source_x-topo_crop.extent[0], source_y-topo_crop.extent[2]]
 
     # arg list for multiprocessing
     arglist = []
