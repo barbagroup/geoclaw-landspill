@@ -1,0 +1,78 @@
+# vim:ft=singularity
+
+# the base image is ubuntu 18.04 
+Bootstrap: docker
+From: barbagroup/landspill:bionic
+
+# environment variablae DURING RUNTIME
+%environment
+    export PYTHON=python
+    export FC=gfortran-8
+    export MPLBACKEND=agg
+    export CLAW=/opt/clawpack
+    export PYTHONPATH=/opt/clawpack
+
+# =============================================================================
+# commands after pulling the base ubuntu image
+# =============================================================================
+%post
+
+# =============================================================================
+# Command (App): run
+# =============================================================================
+%apprun run
+    run.py $@
+
+# =============================================================================
+# Command (App): createnc
+# =============================================================================
+%apprun createnc
+    createnc.py $@
+
+# =============================================================================
+# Command (App): plotdepths
+# =============================================================================
+%apprun plotdepths
+    plotdepths.py $@
+
+# =============================================================================
+# Command (App): plottopos
+# =============================================================================
+%apprun plottopos
+    plottopos.py $@
+
+# =============================================================================
+# Command (App): calculatevolume
+# =============================================================================
+%apprun calculatevolume
+    calculatevolume.py $@
+
+# =============================================================================
+# Default command
+# =============================================================================
+%runscript
+    exec /bin/bash
+
+# =============================================================================
+# labels
+# =============================================================================
+%labels
+    Author Pi-Yueh Chuang (pychuang@gwu.edu)
+    Version alpha
+
+# =============================================================================
+# message shown when using $ singularity run-help {image file}
+# =============================================================================
+%help
+
+    $ singularity run --app {app} landspill.sif {app arguments}
+
+    App:
+        run: run a GeoClaw-Landspill case
+        createnc: create NetCDF file for a GeoClaw-Landspill case
+        plotdepths: plot depth results for a GeoClaw-Landspill case
+        plottopos: plot topo for a GeoClaw-Landspill case
+        calculatevolume: calculate total volumes of all AMR levels for a GeoClaw-Landspill case
+
+    To see usage of each app, use
+    $ singularity run --app {app} landspill.sif --help
