@@ -11,6 +11,7 @@ From: barbagroup/landspill:bionic
     export MPLBACKEND=agg
     export CLAW=/opt/clawpack
     export PYTHONPATH=/opt/clawpack
+    unset GDAL_DATA
 
 # =============================================================================
 # commands after pulling the base ubuntu image
