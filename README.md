@@ -1,23 +1,62 @@
 geoclaw-landspill-cases
 ==========================
 
-This repo contains a collection of land-spill simulation cases and utilities.
+This repository contains a collection of land-spill simulation cases and 
+utilities. It helps the repoducibility of our research, and in the meanwhile,
+provides utility tools to ease the workflow of overland flow simulation with
+GeoClaw. In additons, the Docker image provided by this repository can help
+Windows user run simulations with GeoClaw, which does not officially support
+Windows. And the Singularity image makes running GeoClaw on HPC clusters easier.
+Most supercomputers and HPC clusters do not support Docker, and Singularity is
+the only option.
+
+The solver used for overland flow simulations is a modified version of 
+[GeoClaw](http://www.clawpack.org/geoclaw.html). Currently, this modified 
+version has not yet been merged back into the upstream. And the source code of 
+the the modified version can be found [here](https://github.com/barbagroup/geoclaw).
+
+## Content
+1. [Setting up](#setting-up)
+    1. [Prerequisites](#prerequisites)
+    2. [Steps](#steps)
+2. [Running a case](#running-a-case)
+3. [Other utilities](#other-utilities)
+4. [Docker usage](#docker-usage)
+5. [Singularity usage](#singularity-usage)
+6. [Contact](#contact)
 
 ------------------------------------------------------------------------
 ## I. Setting up
 
+The recommended way to run cases or use utilities in this repository is 
+through [Docker](#docker-usage) images or [Singularity](#singularity-usage) 
+images. But in case both Docker and Singularity are not available, follow the 
+instruction in this section to set up the environment.
 
-#### Option A: Using Docker image
+### I-1. Prerequisites
 
-If choosing to use Docker image, the docker image is located at DockerHub
-`barbagroup/landspill:applications`. Everything needed is in the image.
+1. [numpy](http://www.numpy.org/)
+2. [scipy](https://www.scipy.org/) (optional): used in the script `createnc.py`.
+3. [matplotlit](https://matplotlib.org/) (optiona): used in `plotdepths.py` and
+   `plottopos.py`.
+4. [requests](http://docs.python-requests.org/en/master/) (optional): used for 
+   automatic downloading of topography files
+5. [rasterio](https://github.com/mapbox/rasterio) (optional): used for automatic
+   downloading of topography files.
+6. [netCDF4](http://unidata.github.io/netcdf4-python/) (optional): used in the
+   script `createnc.py`.
 
-1. Pull the image through:  
-   `$ docker pull barbagroup/landspill:applications`
-2. Create a container with the image and log into a bash shell:  
-   `$ docker run -it --name landspill barbagroup/landspill:applications /bin/bash`
-3. The repo is at `~/geoclaw-landspill-cases`. There is already a compiled
-   solver in `bin` folder and required topography files in `common_files`.
+For users using [Anaconda](https://www.anaconda.com/), the following commands
+are for installing the prerequisites in shell (Linux) or CMD (Windows):
+
+```
+$ conda install numpy
+$ conda install scipy
+$ conda install matplotlib
+$ conda install rasterio
+$ conda install netcdf4
+$ conda install requests
+```
 
 #### Option B: Manually setting up the environment
 
@@ -40,30 +79,20 @@ If choosing to use Docker image, the docker image is located at DockerHub
    This will download required data and compile a binary executable for
    the solver.
 
+
+#### Option A: Using Docker image
+
+If choosing to use Docker image, the docker image is located at DockerHub
+`barbagroup/landspill:bionic`. Everything needed is in the image.
+
+1. Pull the image through:  
+   `$ docker pull barbagroup/landspill:bionic`
+2. Create a container with the image and log into a bash shell:  
+   `$ docker run -it --name landspill barbagroup/landspill:applications /bin/bash`
+3. The repo is at `~/geoclaw-landspill-cases`. There is already a compiled
+   solver in `bin` folder and required topography files in `common_files`.
+
 #### Prerequisites
-
-1. [rasterio](https://github.com/mapbox/rasterio) (optional): used for automatic
-   downloading of topography files.
-2. [netCDF4](http://unidata.github.io/netcdf4-python/) (optional): used in the
-   script `createnc.py`.
-3. [numpy](http://www.numpy.org/) (required)
-4. [scipy](https://www.scipy.org/) (optional): used in the script `createnc.py`.
-5. [matplotlit](https://matplotlib.org/) (optiona): used in `plotdepths.py` and
-   `plottopos.py`.
-6. [requests](http://docs.python-requests.org/en/master/) (optional): used for 
-   automatic downloading of topography files
-
-For users using [Anaconda](https://www.anaconda.com/), the following commands
-are for installing the prerequisites in shell (Linux) or CMD (Windows):
-
-```
-$ conda install numpy
-$ conda install scipy
-$ conda install matplotlib
-$ conda install rasterio
-$ conda install netcdf4
-$ conda install requests
-```
 
 ------------------------------------------------------------------------
 ## II. Running a case
