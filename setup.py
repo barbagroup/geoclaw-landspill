@@ -75,7 +75,7 @@ def download_submodules():
 
     # delete the empty geoclaw directory
     try:
-        os.rmdir(os.path.join(solver_path, "geoclaw"))
+        os.rmdir(os.path.join(solver_path, "geoclaw-landspill"))
     except FileNotFoundError:
         pass
 
