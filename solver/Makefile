@@ -1,63 +1,49 @@
-# Makefile for Clawpack code in this directory.
-# This version only sets the local files and frequently changed
-# options, and then includes the standard makefile pointed to by CLAWMAKE.
-CLAWMAKE = $(CLAW)/clawutil/src/Makefile.common
+# the absolute path to the directory where this makefile is
+WD := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-# See the above file for details and a list of make options, or type
-#   make .help
-# at the unix prompt.
+# path to clawpack
+CLAW := $(WD)/clawpack
 
+# path to geoclaw-landspill src directory
+GEOLIB := $(WD)/geoclaw-landspill/src/2d/shallow
 
-# Adjust these variables if desired:
+# makefile for Clawpack code
+CLAWMAKE := $(CLAW)/clawutil/src/Makefile.common
+
+# adjust these variables if desired:
 # ----------------------------------
+CLAW_PKG := geoclaw             # Clawpack package to use
+EXE := $(WD)/bin/xgeoclaw      # Executable to create
+SETRUN_FILE := setrun.py        # File containing function to make data
+OUTDIR := _output               # Directory for output
+SETPLOT_FILE := setplot.py      # File containing function to set plots
+PLOTDIR := _plots               # Directory for plots
 
-CLAW_PKG = geoclaw                  # Clawpack package to use
-EXE = bin/xgeoclaw                 # Executable to create
-SETRUN_FILE = setrun.py        # File containing function to make data
-OUTDIR = _output               # Directory for output
-SETPLOT_FILE = setplot.py      # File containing function to set plots
-PLOTDIR = _plots               # Directory for plots
+# default Fortran compiler; can be overwritten by an environment variable
+FC ?= gfortran
 
-# Environment variable FC should be set to fortran compiler, e.g. gfortran
-
-# Compiler flags can be specified here or set as an environment variable
+# compiler flags can be specified here or set as an environment variable
 FFLAGS ?= -O2 -fopenmp
 
-# ---------------------------------
-# package sources for this program:
-# ---------------------------------
-
-GEOLIB = $(CLAW)/geoclaw/src/2d/shallow
+# source files used for geoclaw-landspill
 include $(GEOLIB)/Makefile.geoclaw
 
-# ---------------------------------------
-# package sources specifically to exclude
-# (i.e. if a custom replacement source 
-#  under a different name is provided)
-# ---------------------------------------
-
-EXCLUDE_MODULES = \
-
-EXCLUDE_SOURCES = \
+# package sources excluded
+EXCLUDE_MODULES :=
+EXCLUDE_SOURCES := \
 	stepgrid.f \
 	flag2refine2.f90 \
 	update.f90
 
-# ----------------------------------------
-# List of custom sources for this program:
-# ----------------------------------------
+# custom source files for this program
+MODULES :=
+SOURCES := \
+	$(CLAW)/riemann/src/rpn2_geoclaw.f \
+	$(CLAW)/riemann/src/rpt2_geoclaw.f \
+	$(CLAW)/riemann/src/geoclaw_riemann_utils.f \
+	$(GEOLIB)/landspill/optimized/stepgrid.f \
+	$(GEOLIB)/landspill/optimized/flag2refine2.f90 \
+	$(GEOLIB)/landspill/optimized/update.f90
 
-
-MODULES = \
-
-SOURCES = \
-  $(CLAW)/riemann/src/rpn2_geoclaw.f \
-  $(CLAW)/riemann/src/rpt2_geoclaw.f \
-  $(CLAW)/riemann/src/geoclaw_riemann_utils.f \
-  $(CLAW)/geoclaw/src/2d/shallow/landspill/optimized/stepgrid.f \
-  $(CLAW)/geoclaw/src/2d/shallow/landspill/optimized/flag2refine2.f90 \
-  $(CLAW)/geoclaw/src/2d/shallow/landspill/optimized/update.f90 \
-
-#-------------------------------------------------------------------
-# Include Makefile containing standard definitions and make options:
+# include makefile containing standard definitions and make options:
 include $(CLAWMAKE)

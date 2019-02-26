@@ -1,0 +1,6 @@
+[submodule "solver/clawpack"]
+	path = solver/clawpack
+	url = https://github.com/clawpack/clawpack.git
+[submodule "solver/geoclaw-landspill"]
+	path = solver/geoclaw-landspill
+	url = https://github.com/barbagroup/geoclaw.git
