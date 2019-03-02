@@ -12,9 +12,8 @@ Helper functions for post-processing.
 
 import os
 import numpy
-import netCDF4
-import matplotlib
 import scipy.interpolate
+import matplotlib
 from matplotlib import pyplot
 from clawpack.geoclaw import topotools
 from clawpack import pyclaw
@@ -123,9 +122,8 @@ def plot_at_axes(solution, ax, size, field=0, border=False,
         if p.level < min_level:
             continue
 
-        if max_level is not None:
-            if p.level > max_level:
-                continue
+        if max_level is not None and max_level < p.level:
+            continue
 
         x, dx = numpy.linspace(p.lower_global[0], p.upper_global[0],
                                p.num_cells_global[0]+1, retstep=True)
@@ -207,17 +205,11 @@ def plot_depth(topo, solndir, fno, border=False, level=1,
     # empty solution object
     soln = pyclaw.Solution()
 
-    # path
+    # aux path
     auxpath = os.path.join(solndir, "fort.a"+"{}".format(fno).zfill(4))
 
-    # determine whether to read aux
-    if os.path.isfile(auxpath):
-        aux = True
-    else:
-        aux = False
-
     # read
-    soln.read(fno, solndir, file_format="binary", read_aux=aux)
+    soln.read(fno, solndir, file_format="binary", read_aux=os.path.isfile(auxpath))
 
     # calculate total volume at each grid level
     ncells, volumes = get_level_ncells_volumes(soln)
@@ -418,18 +410,12 @@ def get_bounding_box(solndir, bg, ed, level):
 
     for fno in range(bg, ed):
 
-        # path
+        # aux path
         auxpath = os.path.join(solndir, "fort.a"+"{}".format(fno).zfill(4))
-
-        # determine whether to read aux
-        if os.path.isfile(auxpath):
-            aux = True
-        else:
-            aux = False
 
         # solution
         soln = pyclaw.Solution()
-        soln.read(fno, solndir, file_format="binary", read_aux=aux)
+        soln.read(fno, solndir, file_format="binary", read_aux=os.path.isfile(auxpath))
 
         # search through AMR grid patched in this solution
         for state in soln.states:
@@ -438,24 +424,16 @@ def get_bounding_box(solndir, bg, ed, level):
             if p.level != level:
                 continue
 
-            if xleft is None:
-                xleft = p.lower_global[0]
-            elif p.lower_global[0] < xleft:
+            if xleft is None or xleft > p.lower_global[0]:
                 xleft = p.lower_global[0]
 
-            if ybottom is None:
-                ybottom = p.lower_global[1]
-            elif p.lower_global[1] < ybottom:
+            if ybottom is None or ybottom > p.lower_global[1]:
                 ybottom = p.lower_global[1]
 
-            if xright is None:
-                xright = p.upper_global[0]
-            elif p.upper_global[0] > xright:
+            if xright is None or xright < p.upper_global[0]:
                 xright = p.upper_global[0]
 
-            if ytop is None:
-                ytop = p.upper_global[1]
-            elif p.upper_global[1] > ytop:
+            if ytop is None or ytop < p.upper_global[1]:
                 ytop = p.upper_global[1]
 
     # finally, return
@@ -480,8 +458,7 @@ def get_state_interpolator(state, field=0):
     assert numpy.abs(dy-p.delta[1]) < 1e-6, "{} {}".format(dy, p.delta[1])
 
     # get the interpolation object
-    kx = 3
-    ky = 3
+    kx = ky = 3
 
     if x.size <= 3:
         kx = x.size - 1
@@ -543,8 +520,6 @@ class TopographyMod(topotools.Topography):
 
         """
 
-        # super(Topography, self).__init__()
-
         self.path = path
         self.topo_func = topo_func
         self.topo_type = topo_type
@@ -553,12 +528,7 @@ class TopographyMod(topotools.Topography):
         self.no_data_value = -9999
 
         # Data storage for only calculating array shapes when needed
-        self._z = None
-        self._Z = None
-        self._x = None
-        self._X = None
-        self._y = None
-        self._Y = None
+        self._z = self._Z = self._x = self._X = self._y = self._Y = None
         self._extent = None
         self._delta = None
 

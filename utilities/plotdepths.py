@@ -7,7 +7,7 @@
 # Distributed under terms of the MIT license.
 
 """
-Plot topography and flow depth
+Plot topography and flow depth.
 """
 
 import os
@@ -15,12 +15,13 @@ import sys
 import datetime
 import argparse
 import multiprocessing
-from matplotlib import pyplot
-from pphelper import plot_depth, TopographyMod
 
 def plotting_task(inputs):
     """A single task to create a single plot for multi-threading."""
+    from matplotlib import pyplot
+    from pphelper import plot_depth
 
+    # unroll parameters
     plot_dir, no, topo, soln_dir, opts, point = inputs
 
     fig_path = os.path.join(plot_dir, "depth{:04d}.png".format(no))
@@ -52,34 +53,44 @@ if __name__ == "__main__":
     # CMD argument parser
     parser = argparse.ArgumentParser(description="Plot depth on topography.")
 
-    parser.add_argument('case', metavar='case', type=str,
-                        help='the name of the case')
+    parser.add_argument(
+        'case', metavar='case', type=str, help='the name of the case')
 
-    parser.add_argument('--level', dest="level", action="store", type=int,
-                        help='plot depth result at a specific AMR level \
-                                (default: finest level)')
+    parser.add_argument(
+        '--level', dest="level", action="store", type=int,
+        help='plot depth result at a specific AMR level (default: finest level)')
 
-    parser.add_argument('--dry-tol', dest="dry_tol", action="store", type=float,
-                        help='tolerance for dry state (default: ' +
-                                'obtained from setrun.py)')
+    parser.add_argument(
+        '--dry-tol', dest="dry_tol", action="store", type=float,
+        help='tolerance for dry state (default: obtained from setrun.py)')
 
-    parser.add_argument('--cmax', dest="cmax", action="store", type=float,
-                        help='maximum value in the depth colorbar (default: ' +
-                                'obtained from solution)')
+    parser.add_argument(
+        '--cmax', dest="cmax", action="store", type=float,
+        help='maximum value in the depth colorbar (default: obtained from solution)')
 
-    parser.add_argument('--cmin', dest="cmin", action="store", type=float,
-                        help='minimum value in the depth colorbar (default: ' +
-                                'obtained from solution)')
+    parser.add_argument(
+        '--cmin', dest="cmin", action="store", type=float,
+        help='minimum value in the depth colorbar (default:  obtained from solution)')
 
-    parser.add_argument('--continue', dest="restart", action="store_true",
-                        help='continue creating figures in existing _plot folder')
+    parser.add_argument(
+        '--frame-bg', dest="frame_bg", action="store", type=int,
+        help='customized start farme no. (default: 0)')
 
-    parser.add_argument('--border', dest="border", action="store_true",
-                        help='also plot the borders of grid patches')
+    parser.add_argument(
+        '--frame-ed', dest="frame_ed", action="store", type=int,
+        help='customized end farme no. (default: get from setrun.py)')
 
-    parser.add_argument('--nprocs', dest="nprocs", action="store", type=int,
-                        help='plot depth result at a specific AMR level \
-                                (default: half system threads)')
+    parser.add_argument(
+        '--continue', dest="restart", action="store_true",
+        help='continue creating figures in existing _plot folder')
+
+    parser.add_argument(
+        '--border', dest="border", action="store_true",
+        help='also plot the borders of grid patches')
+
+    parser.add_argument(
+        '--nprocs', dest="nprocs", action="store", type=int,
+        help='plot depth result at a specific AMR level (default: half system threads)')
 
     # process arguments
     args = parser.parse_args()
@@ -88,7 +99,7 @@ if __name__ == "__main__":
     casepath = os.path.abspath(args.case)
 
     # get the abs path of the repo
-    repopath = os.path.dirname(os.path.abspath(__file__))
+    repopath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # check case dir
     if not os.path.isdir(casepath):
@@ -110,30 +121,28 @@ if __name__ == "__main__":
               file=sys.stderr)
         sys.exit(1)
 
+    # path to clawpack
+    claw_dir = os.path.join(repopath, "solver", "clawpack")
+
+    # set CLAW environment variable to satisfy some Clawpack functions' need
+    os.environ["CLAW"] = claw_dir
+
+    # make clawpack searchable
+    sys.path.insert(0, claw_dir)
+
+    # import utilities
+    from pphelper import TopographyMod, get_bounding_box
+
     # load setup.py
     sys.path.insert(0, casepath) # add case folder to module search path
     import setrun # import the setrun.py
 
     rundata = setrun.setrun() # get ClawRunData object
 
-    # computational domain
-    x_crop_bg = rundata.clawdata.lower[0]
-    x_crop_ed = rundata.clawdata.upper[0]
-    y_crop_bg = rundata.clawdata.lower[1]
-    y_crop_ed = rundata.clawdata.upper[1]
-
-    # read topo file
-    topofilename = os.path.join(casepath, rundata.topo_data.topofiles[0][-1])
-    topo_raw = TopographyMod()
-    topo_raw.read(topofilename, topo_type=3)
-    topo_crop = topo_raw.crop([x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed])
-
-    # source points
-    source_x = rundata.landspill_data.point_sources.point_sources[0][0][0]
-    source_y = rundata.landspill_data.point_sources.point_sources[0][0][1]
-
     # number of frames
-    if rundata.clawdata.output_style == 1:
+    if args.frame_ed is not None:
+        frame_ed = args.frame_ed + 1
+    elif rundata.clawdata.output_style == 1:
         frame_ed = rundata.clawdata.num_output_times
         if rundata.clawdata.output_t0:
             frame_ed += 1
@@ -145,7 +154,11 @@ if __name__ == "__main__":
         if rundata.clawdata.output_t0:
             frame_ed += 1
 
-    frame_bg = 0
+    # starting frame no.
+    if args.frame_bg is not None:
+        frame_bg = args.frame_bg
+    else:
+        frame_bg = 0
 
     # process plot level
     if args.level is None:
@@ -159,6 +172,27 @@ if __name__ == "__main__":
     if args.nprocs is None:
         args.nprocs = 1
 
+    # find bounding box we're going to use for plots
+    x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed = \
+        get_bounding_box(outputpath, frame_bg, frame_ed, args.level)
+
+    Dx = (x_crop_ed - x_crop_bg) * 0.1
+    Dy = (y_crop_ed - y_crop_bg) * 0.1
+    x_crop_bg -= Dx
+    x_crop_ed += Dx
+    y_crop_bg -= Dy
+    y_crop_ed += Dy
+
+    # read topo file
+    topofilename = os.path.join(casepath, rundata.topo_data.topofiles[0][-1])
+    topo_raw = TopographyMod()
+    topo_raw.read(topofilename, topo_type=3)
+    topo_crop = topo_raw.crop([x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed])
+
+    # source points; assume only one point source
+    source_x = rundata.landspill_data.point_sources.point_sources[0][0][0]
+    source_y = rundata.landspill_data.point_sources.point_sources[0][0][1]
+
     # folder of plots
     plotdir = os.path.join(casepath, "_plots/depths/level{:02}".format(args.level))
     if not os.path.isdir(plotdir):
@@ -171,7 +205,7 @@ if __name__ == "__main__":
         os.rename(plotdir, backup_plotdir)
         os.mkdir(plotdir)
 
-    # location of the point
+    # location of the point in raster plots
     point_loc = [source_x-topo_crop.extent[0], source_y-topo_crop.extent[2]]
 
     # arg list for multiprocessing

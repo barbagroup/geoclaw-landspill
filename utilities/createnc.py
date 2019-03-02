@@ -16,11 +16,24 @@ import numpy
 import netCDF4
 import datetime
 import argparse
-from clawpack import pyclaw
-from pphelper import get_bounding_box, interpolate
 
 
 if __name__ == "__main__":
+
+    # get the abs path of the repo
+    repopath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    # path to clawpack
+    claw_dir = os.path.join(repopath, "solver", "clawpack")
+
+    # set CLAW environment variable to satisfy some Clawpack functions' need
+    os.environ["CLAW"] = claw_dir
+
+    # make clawpack searchable
+    sys.path.insert(0, claw_dir)
+
+    from clawpack import pyclaw
+    from pphelper import get_bounding_box, interpolate
 
     # CMD argument parser
     parser = argparse.ArgumentParser(
@@ -46,9 +59,6 @@ if __name__ == "__main__":
 
     # get case path
     casepath = os.path.abspath(args.case)
-
-    # get the abs path of the repo
-    repopath = os.path.dirname(os.path.abspath(__file__))
 
     # check case dir
     if not os.path.isdir(casepath):
@@ -113,8 +123,8 @@ if __name__ == "__main__":
             os.path.basename(args.case), args.level))
 
     # find bounding box we're going to use for NC data
-    xleft, xright, ybottom, ytop = get_bounding_box(
-        outputpath, frame_bg, frame_ed, args.level)
+    xleft, xright, ybottom, ytop = \
+        get_bounding_box(outputpath, frame_bg, frame_ed, args.level)
 
     # get the resolution at the target level
     dx = (x_domain_ed - x_domain_bg) / rundata.clawdata.num_cells[0]
