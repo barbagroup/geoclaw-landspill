@@ -276,14 +276,8 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
     # path
     auxpath = os.path.join(solndir, "fort.a"+"{}".format(fno).zfill(4))
 
-    # determine whether to read aux
-    if os.path.isfile(auxpath):
-        aux = True
-    else:
-        aux = False
-
     # read
-    soln.read(fno, solndir, file_format="binary", read_aux=aux)
+    soln.read(fno, solndir, file_format="binary", read_aux=os.path.isfile(auxpath))
 
     print("Plotting frame No. {}, T={} secs ({} mins)".format(
         fno, soln.state.t, int(soln.state.t/60.)))
@@ -305,15 +299,12 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
         if p.level != 1:
             continue
 
-        x, dx = numpy.linspace(p.lower_global[0], p.upper_global[0],
-                               p.num_cells_global[0]+1, retstep=True)
-        y, dy = numpy.linspace(p.lower_global[1], p.upper_global[1],
-                               p.num_cells_global[1]+1, retstep=True)
+        x = numpy.linspace(p.lower_global[0], p.upper_global[0],
+                           p.num_cells_global[0]+1, retstep=True)[0] - shift[0]
+        y = numpy.linspace(p.lower_global[1], p.upper_global[1],
+                           p.num_cells_global[1]+1, retstep=True)[0] - shift[1]
 
-        x -= shift[0]
-        y -= shift[1]
-
-        if aux:
+        if os.path.isfile(auxpath):
             data = state.aux[0, :, :]
         else:
             data = state.q[3, :, :] - state.q[0, :, :]
@@ -344,15 +335,12 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
             if p.level != level:
                 continue
 
-            x, dx = numpy.linspace(p.lower_global[0], p.upper_global[0],
-                                   p.num_cells_global[0]+1, retstep=True)
-            y, dy = numpy.linspace(p.lower_global[1], p.upper_global[1],
-                                   p.num_cells_global[1]+1, retstep=True)
+            x = numpy.linspace(p.lower_global[0], p.upper_global[0],
+                               p.num_cells_global[0]+1, retstep=True)[0] - shift[0]
+            y = numpy.linspace(p.lower_global[1], p.upper_global[1],
+                               p.num_cells_global[1]+1, retstep=True)[0] - shift[1]
 
-            x -= shift[0]
-            y -= shift[1]
-
-            if aux:
+            if os.path.isfile(auxpath):
                 data = state.aux[0, :, :]
             else:
                 data = state.q[3, :, :] - state.q[0, :, :]
@@ -378,7 +366,19 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
     ax.set_xlim(0, topo.Z.shape[1])
     ax.set_ylim(0, topo.Z.shape[0])
 
-    # plot colorbar in a new axes for depth
+    xticks_loc = ax.get_xticks()
+    xticks = numpy.array(
+        [i/topo.Z.shape[1]*(topo.extent[1]-topo.extent[0])+topo.extent[0]
+         for i in xticks_loc]).round(2)
+    ax.set_xticklabels(xticks, rotation=-45, ha="left")
+
+    yticks_loc = ax.get_yticks()
+    yticks = numpy.array(
+        [i/topo.Z.shape[0]*(topo.extent[3]-topo.extent[2])+topo.extent[1]
+         for i in yticks_loc]).round(2)
+    ax.set_yticklabels(yticks)
+
+    # plot colorbar in a new axes for elevation
     cbarax = fig.add_axes([0.875, 0.125, 0.03, 0.75])
     im = ax.imshow(topo.Z, cmap=pyplot.cm.terrain,
                    vmin=topo_min, vmax=topo_max, origin='lower')
@@ -387,7 +387,7 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
     cbar.set_label("Elevation (m)")
 
     # figure title
-    fig.suptitle("Topography data in AMR grid patches, "
+    fig.suptitle("Elevation data in AMR grid patches, "
                  "T = {} (mins)".format(int(soln.state.t/60.)),
                  x=0.5, y=0.9, fontsize=16,
                  horizontalalignment="center",
