@@ -9,12 +9,12 @@
 """
 Plot topography and flow depth.
 """
-
 import os
 import sys
 import datetime
 import argparse
 import multiprocessing
+import rasterio
 
 def plotting_task(inputs):
     """A single task to create a single plot for multi-threading."""
@@ -22,7 +22,7 @@ def plotting_task(inputs):
     from pphelper import plot_depth
 
     # unroll parameters
-    plot_dir, no, topo, soln_dir, opts, point = inputs
+    elev, trans, res, plot_dir, soln_dir, no, opts, point = inputs
 
     fig_path = os.path.join(plot_dir, "depth{:04d}.png".format(no))
     if os.path.isfile(fig_path):
@@ -30,14 +30,11 @@ def plotting_task(inputs):
         return
 
     figH, axH = plot_depth(
-        topo, soln_dir, no, opts.border, opts.level, opts.dry_tol,
+        elev, trans, res, soln_dir, no, opts.border, opts.level, opts.dry_tol,
         opts.cmin, opts.cmax)
 
     # plot point source
-    lineH = axH.plot(
-        point[0]*topo.Z.shape[1]/(topo.extent[1]-topo.extent[0]),
-        point[1]*topo.Z.shape[0]/(topo.extent[3]-topo.extent[2]),
-        'r.', markersize=10)
+    lineH = axH.plot(point[0], point[1], 'r.', markersize=10)
 
     # label
     axH.legend(lineH, ["source"])
@@ -185,13 +182,25 @@ if __name__ == "__main__":
 
     # read topo file
     topofilename = os.path.join(casepath, rundata.topo_data.topofiles[0][-1])
-    topo_raw = TopographyMod()
-    topo_raw.read(topofilename, topo_type=3)
-    topo_crop = topo_raw.crop([x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed])
+    raster =  rasterio.open(topofilename)
+
+    # window/extent object enclosing the cropped region
+    window = raster.window(x_crop_bg, y_crop_bg, x_crop_ed, y_crop_ed)
+
+    # topography raster resolution: (dx, dy)
+    res = raster.res
+
+    # geotransform object of the cropped region
+    trans = rasterio.transform.from_origin(x_crop_bg, y_crop_ed, res[0], res[1])
+
+    # read the cropped data
+    topodata = raster.read(1, window=window)
 
     # source points; assume only one point source
-    source_x = rundata.landspill_data.point_sources.point_sources[0][0][0]
-    source_y = rundata.landspill_data.point_sources.point_sources[0][0][1]
+    source = rundata.landspill_data.point_sources.point_sources[0][0]
+
+    # close the raster file
+    raster.close()
 
     # folder of plots
     plotdir = os.path.join(casepath, "_plots/depths/level{:02}".format(args.level))
@@ -205,15 +214,13 @@ if __name__ == "__main__":
         os.rename(plotdir, backup_plotdir)
         os.mkdir(plotdir)
 
-    # location of the point in raster plots
-    point_loc = [source_x-topo_crop.extent[0], source_y-topo_crop.extent[2]]
-
     # arg list for multiprocessing
     arglist = []
 
     # prepare arglist
     for frameno in range(frame_bg, frame_ed):
-        arglist.append((plotdir, frameno, topo_crop, outputpath, args, point_loc))
+        arglist.append((
+            topodata, trans, res, plotdir, outputpath, frameno, args, source))
 
     # multiprocesses
     p = multiprocessing.Pool(args.nprocs)

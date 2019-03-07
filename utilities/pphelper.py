@@ -81,10 +81,9 @@ def get_level_ncells_volumes(solution):
 
     return ncells, volumes
 
-def plot_at_axes(solution, ax, size, field=0, border=False,
-                 min_level=2, max_level=None, extent=[0., 1., 0., 1.],
-                 vmin=None, vmax=None, threshold=1e-4,
-                 cmap=pyplot.cm.viridis):
+def plot_at_axes(solution, ax, field=0, border=False,
+                 min_level=2, max_level=None, vmin=None, vmax=None,
+                 threshold=1e-4, cmap=pyplot.cm.viridis):
     """Plot solution.
 
     Plot a field in the q array of a solution object.
@@ -100,7 +99,6 @@ def plot_at_axes(solution, ax, size, field=0, border=False,
         border [in]: a boolean indicating whether to plot grid patch borders.
         min_levle [in]: the minimum level of AMR grid to be plotted.
         max_levle [in]: the maximum level of AMR grid to be plotted.
-        shift [in]: size-2 1D list of the linear shifting in x and y direction.
         vmin [in]: value of the minimum value of the colorbar.
         vmax [in]: value of the maximum value of the colorbar.
         threshold [in]: values below this threshold will be clipped off.
@@ -132,16 +130,6 @@ def plot_at_axes(solution, ax, size, field=0, border=False,
         assert numpy.abs(dx-p.delta[0]) < 1e-6, "{} {}".format(dx, p.delta[0])
         assert numpy.abs(dy-p.delta[1]) < 1e-6, "{} {}".format(dy, p.delta[1])
 
-        Lx = extent[1] - extent[0]
-        Ly = extent[3] - extent[2]
-
-        x -= extent[0]
-        x /= Lx
-        x *= size[0]
-        y -= extent[2]
-        y /= Ly
-        y *= size[1]
-
         im = ax.pcolormesh(
             x, y, numpy.ma.masked_less(state.q[field, :, :], threshold).T,
             shading='flat', edgecolors='None',
@@ -156,8 +144,10 @@ def plot_at_axes(solution, ax, size, field=0, border=False,
     except UnboundLocalError:
         return None
 
-def plot_topo(topo, topo_min=None, topo_max=None, colormap=pyplot.cm.terrain):
+def plot_topo(data, transform, res, topo_min=None, topo_max=None,
+              colormap=pyplot.cm.terrain):
     """Return a fig and ax object with topography."""
+    import rasterio.plot
 
     # a new figure
     fig = pyplot.figure(0, (13, 8), 90)
@@ -170,37 +160,49 @@ def plot_topo(topo, topo_min=None, topo_max=None, colormap=pyplot.cm.terrain):
 
     # min and max
     if topo_min is None:
-        topo_min = topo.Z.mean() - 2 * topo.Z.std()
+        topo_min = data.mean() - 2 * data.std()
     if topo_max is None:
-        topo_max = topo.Z.mean() + 2 * topo.Z.std()
+        topo_max = data.mean() + 2 * data.std()
+
+    # get shaded RGBA data
+    shaded = ls.shade(
+        data, blend_mode="overlay", vert_exag=3, dx=res[0], dy=res[1],
+        vmin=topo_min, vmax=topo_max, cmap=pyplot.cm.terrain)
+
+    # convert from (row, column, band) to (band, row, column)
+    shaded = rasterio.plot.reshape_as_raster(shaded)
 
     # show topography in cropped region
-    ax_topo.imshow(
-        ls.shade(
-            topo.Z, blend_mode='overlay', vert_exag=3,
-            dx=1, dy=1, vmin=topo_min, vmax=topo_max, cmap=colormap),
-        origin='lower')
+    rasterio.plot.show(shaded, ax=ax_topo, transform=transform, adjust=None)
 
     # x, y labels
     ax_topo.set_xlabel("x coordinates (m)")
     ax_topo.set_ylabel("y coordinates (m)")
 
+    # get x, y limit
+    xlim = ax_topo.get_xlim()
+    ylim = ax_topo.get_ylim()
+
     # plot colorbar in a new axes for topography
     cbarax = fig.add_axes([0.775, 0.125, 0.03, 0.75])
-    im = ax_topo.imshow(topo.Z, cmap=colormap,
-                        vmin=topo_min, vmax=topo_max, origin='lower')
+    im = ax_topo.imshow(
+        data, cmap=colormap, vmin=topo_min, vmax=topo_max, origin='lower')
     im.remove()
     cbar = pyplot.colorbar(im, cax=cbarax, ax=ax_topo)
     cbar.set_label("Elevation (m)")
 
+    # reset the x, y lim
+    ax_topo.set_xlim(xlim)
+    ax_topo.set_ylim(ylim)
+
     return fig, ax_topo
 
-def plot_depth(topo, solndir, fno, border=False, level=1,
+def plot_depth(data, transform, res, solndir, fno, border=False, level=1,
                dry_tol=1e-5, vmin=None, vmax=None):
     """Plot depth on topography."""
 
     # a new figure and topo ax
-    fig, ax = plot_topo(topo)
+    fig, ax = plot_topo(data, transform, res)
 
     # empty solution object
     soln = pyclaw.Solution()
@@ -221,30 +223,15 @@ def plot_depth(topo, solndir, fno, border=False, level=1,
         fno, ncells, volumes))
 
     # plot
-    im = plot_at_axes(soln, ax, topo.Z.shape[-1::-1], field=0, border=border,
+    im = plot_at_axes(soln, ax, field=0, border=border,
                       min_level=level, max_level=level,
-                      extent=topo.extent, vmin=vmin, vmax=vmax,
+                      vmin=vmin, vmax=vmax,
                       threshold=dry_tol)
-
-    ax.set_xlim(0, topo.Z.shape[1])
-    ax.set_ylim(0, topo.Z.shape[0])
-
-    xticks_loc = ax.get_xticks()
-    xticks = numpy.array(
-        [i/topo.Z.shape[1]*(topo.extent[1]-topo.extent[0])+topo.extent[0]
-         for i in xticks_loc]).round(2)
-    ax.set_xticklabels(xticks, rotation=-45, ha="left")
-
-    yticks_loc = ax.get_yticks()
-    yticks = numpy.array(
-        [i/topo.Z.shape[0]*(topo.extent[3]-topo.extent[2])+topo.extent[1]
-         for i in yticks_loc]).round(2)
-    ax.set_yticklabels(yticks)
 
     # plot colorbar in a new axes for depth
     cbarax = fig.add_axes([0.875, 0.125, 0.03, 0.75])
     if im is None:
-        im = ax.pcolormesh([0, topo.Z.shape[1]], [0, topo.Z.shape[0]], [[0]])
+        im = ax.pcolormesh([0, data.shape[1]], [0, data.shape[0]], [[0]])
         im.remove()
         cbar = pyplot.colorbar(im, cax=cbarax, ax=ax)
         cbar.ax.set_yticklabels([0]*len(cbar.ax.get_yticks()))
