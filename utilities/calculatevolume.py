@@ -9,13 +9,31 @@
 """
 Calculate total volume at each AMR level and at each output time.
 """
-
 import os
 import sys
 import argparse
 import numpy
-from clawpack import pyclaw
-from pphelper import get_level_ncells_volumes
+
+
+def get_level_ncells_volumes(solution):
+    """
+    Get level-wise numbers of cells and fluid volumes.
+    """
+    from pphelper import get_max_AMR_level
+
+    max_level = get_max_AMR_level(solution)
+
+    ncells = numpy.zeros(max_level, dtype=numpy.int)
+    volumes = numpy.zeros(max_level, dtype=numpy.float64)
+
+    for state in solution.states:
+        p = state.patch
+        level = p.level
+
+        ncells[level-1] += p.num_cells_global[0] * p.num_cells_global[1]
+        volumes[level-1] += (numpy.sum(state.q[0, :, :]) * p.delta[0] * p.delta[1])
+
+    return ncells, volumes
 
 if __name__ == "__main__":
 
@@ -40,7 +58,7 @@ if __name__ == "__main__":
     casepath = os.path.abspath(args.case)
 
     # get the abs path of the repo
-    repopath = os.path.dirname(os.path.abspath(__file__))
+    repopath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # check case dir
     if not os.path.isdir(casepath):
@@ -61,6 +79,18 @@ if __name__ == "__main__":
         print("Error: output folder {} does not exist.".format(outputpath),
               file=sys.stderr)
         sys.exit(1)
+
+    # path to clawpack
+    claw_dir = os.path.join(repopath, "solver", "clawpack")
+
+    # set CLAW environment variable to satisfy some Clawpack functions' need
+    os.environ["CLAW"] = claw_dir
+
+    # make clawpack searchable
+    sys.path.insert(0, claw_dir)
+
+    # import utilities
+    from clawpack import pyclaw
 
     # load setup.py
     sys.path.insert(0, casepath) # add case folder to module search path

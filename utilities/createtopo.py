@@ -10,13 +10,13 @@
 Create topography file for a case based on point coordinate and domain extent.
 """
 import os
+import sys
 import time
-import requests
-import rasterio
 
 
-def request_arcgis_token(username, password,
-        portal="https://www.arcgis.com/sharing/rest/generateToken",
+def request_arcgis_token(
+        username, password,
+        token_server="https://www.arcgis.com/sharing/rest/generateToken",
         exp=5):
     """Request a token from ArcGIS token server
 
@@ -25,6 +25,7 @@ def request_arcgis_token(username, password,
 
     Return: a str, the token.
     """
+    import requests
 
     # information that will post to token server to obtain a token
     token_applicant = {
@@ -54,7 +55,7 @@ def obtain_geotiff(extent, filename, res=1, source="3DEP", token=None):
     floating point numbers. Its format is extent = [Xmin, Ymin, Xmax, Ymax].
 
     Available elevation sources are 3DEP and ESRI. If using ESRI data, then
-    token must present. Token van be obtained from the function
+    token must present. Token can be obtained from the function
     request_arcgis_token. If using 3DEP, then remember that 3DEP only has data
     for North America.
 
@@ -65,6 +66,7 @@ def obtain_geotiff(extent, filename, res=1, source="3DEP", token=None):
         source [in]: either 3DEP or ESRI.
         token [in]: if using ESRI source, the token must be provided.
     """
+    import requests
 
     # the REST endpoint of exportImage of the elevation server
     if source == "ESRI":
@@ -73,7 +75,7 @@ def obtain_geotiff(extent, filename, res=1, source="3DEP", token=None):
             "WorldElevation/Terrain/ImageServer/exportImage"
 
         assert token is not None, \
-            "Token cannot be none when using ESRI data source"
+            "Token cannot be None when using ESRI data source"
 
     elif source == "3DEP":
         dem_server = \
@@ -138,6 +140,7 @@ def obtain_geotiff(extent, filename, res=1, source="3DEP", token=None):
 
 def geotiff_2_esri_ascii(in_file, out_file):
     """Convert a GeoTiff to an ESRI ASCII file."""
+    import rasterio
 
     geotiff = rasterio.open(in_file, "r")
 
@@ -191,10 +194,10 @@ def check_download_topo(casepath, rundata):
         if not os.path.isdir(os.path.dirname(topo_file)):
             os.makedirs(os.path.dirname(topo_file))
 
-        print("Downloading {}".format(topo_file+".tif"))
+        print("Downloading {}".format(topo_file+".tif"), file=sys.stdout)
         obtain_geotiff(ext, topo_file+".tif", res)
-        print("Done downloading {}".format(topo_file+".tif"))
-        print("Converting to ESRI ASCII file")
+        print("Done downloading {}".format(topo_file+".tif"), file=sys.stdout)
+        print("Converting to ESRI ASCII file", file=sys.stdout)
         geotiff_2_esri_ascii(topo_file+".tif", topo_file)
-        print("Done converting to {}".format(topo_file))
+        print("Done converting to {}".format(topo_file), file=sys.stdout)
         os.remove(topo_file+".tif")

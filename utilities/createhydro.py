@@ -10,7 +10,7 @@
 Download and create hydrological files.
 """
 import os
-import requests
+import sys
 
 
 def obtain_NHD_geojson(extent):
@@ -19,6 +19,7 @@ def obtain_NHD_geojson(extent):
     Retrun:
         A list: [<flowline>, <area>, <water body>]. The data types are GeoJson.
     """
+    import requests
 
     server = []
 
@@ -121,7 +122,7 @@ def convert_geojson_2_raster(feat_layers, filename, extent, res, crs=3857):
 def check_download_hydro(casepath, rundata):
     """Check hydro file and download it if it does not exist."""
 
-    if len(rundata.landspill_data.hydro_features.files) == 0:
+    if not rundata.landspill_data.hydro_features.files:
         return
 
     hydro_file = os.path.join(
@@ -130,7 +131,7 @@ def check_download_hydro(casepath, rundata):
 
     if not os.path.isfile(hydro_file):
         print("Hydro file {} not found. ".format(hydro_file) +
-              "Download it now.")
+              "Download it now.", file=sys.stdout)
 
         ext = [rundata.clawdata.lower[0], rundata.clawdata.lower[1],
                rundata.clawdata.upper[0], rundata.clawdata.upper[1]]
@@ -154,10 +155,10 @@ def check_download_hydro(casepath, rundata):
         if not os.path.isdir(os.path.dirname(hydro_file)):
             os.makedirs(os.path.dirname(hydro_file))
 
-        print("Obtaining GeoJson from NHD high resolution dataset server.")
+        print("Obtaining GeoJson from NHD high resolution dataset server.", file=sys.stdout)
         feats = obtain_NHD_geojson(ext)
 
-        print("Write GeoJson data to raster file {}".format(hydro_file))
+        print("Write GeoJson data to raster file {}".format(hydro_file), file=sys.stdout)
         convert_geojson_2_raster(feats, hydro_file, ext, res)
 
-        print("Done writing to {}".format(hydro_file))
+        print("Done writing to {}".format(hydro_file), file=sys.stdout)
