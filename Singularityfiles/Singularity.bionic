@@ -9,8 +9,6 @@ From: barbagroup/landspill:bionic
     export PYTHON=python
     export FC=gfortran-8
     export MPLBACKEND=agg
-    export CLAW=/opt/clawpack
-    export PYTHONPATH=/opt/clawpack
     unset GDAL_DATA
 
 # =============================================================================
