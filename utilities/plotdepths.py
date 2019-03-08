@@ -128,7 +128,7 @@ if __name__ == "__main__":
     sys.path.insert(0, claw_dir)
 
     # import utilities
-    from pphelper import TopographyMod, get_bounding_box
+    from pphelper import get_bounding_box
 
     # load setup.py
     sys.path.insert(0, casepath) # add case folder to module search path
@@ -170,8 +170,8 @@ if __name__ == "__main__":
         args.nprocs = 1
 
     # find bounding box we're going to use for plots
-    x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed = \
-        get_bounding_box(outputpath, frame_bg, frame_ed, args.level)
+    x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed = get_bounding_box(
+        outputpath, frame_bg, frame_ed, rundata.amrdata.amr_levels_max)
 
     Dx = (x_crop_ed - x_crop_bg) * 0.1
     Dy = (y_crop_ed - y_crop_bg) * 0.1

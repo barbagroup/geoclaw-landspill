@@ -9,12 +9,8 @@
 """
 Helper functions for post-processing.
 """
-
 import os
 import numpy
-import scipy.interpolate
-import matplotlib
-from matplotlib import pyplot
 from clawpack import pyclaw
 
 
@@ -61,28 +57,9 @@ def get_max_AMR_level(solution):
 
     return max_level
 
-def get_level_ncells_volumes(solution):
-    """
-    Get level-wise numbers of cells and fluid volumes.
-    """
-
-    max_level = get_max_AMR_level(solution)
-
-    ncells = numpy.zeros(max_level, dtype=numpy.int)
-    volumes = numpy.zeros(max_level, dtype=numpy.float64)
-
-    for state in solution.states:
-        p = state.patch
-        level = p.level
-
-        ncells[level-1] += p.num_cells_global[0] * p.num_cells_global[1]
-        volumes[level-1] += (numpy.sum(state.q[0, :, :]) * p.delta[0] * p.delta[1])
-
-    return ncells, volumes
-
 def plot_at_axes(solution, ax, field=0, border=False,
                  min_level=2, max_level=None, vmin=None, vmax=None,
-                 threshold=1e-4, cmap=pyplot.cm.viridis):
+                 threshold=1e-4, cmap="viridis"):
     """Plot solution.
 
     Plot a field in the q array of a solution object.
@@ -144,8 +121,10 @@ def plot_at_axes(solution, ax, field=0, border=False,
         return None
 
 def plot_topo(data, transform, res, topo_min=None, topo_max=None,
-              colormap=pyplot.cm.terrain):
+              colormap="terrain"):
     """Return a fig and ax object with topography."""
+    from matplotlib import colors
+    from matplotlib import pyplot
     import rasterio.plot
 
     # a new figure
@@ -155,7 +134,7 @@ def plot_topo(data, transform, res, topo_min=None, topo_max=None,
     ax_topo = fig.add_axes([0.1, 0.125, 0.65, 0.75])
 
     # light source
-    ls = matplotlib.colors.LightSource(315, 45)
+    ls = colors.LightSource(315, 45)
 
     # min and max
     if topo_min is None:
@@ -166,7 +145,7 @@ def plot_topo(data, transform, res, topo_min=None, topo_max=None,
     # get shaded RGBA data
     shaded = ls.shade(
         data, blend_mode="overlay", vert_exag=3, dx=res[0], dy=res[1],
-        vmin=topo_min, vmax=topo_max, cmap=pyplot.get_cmap("terrain"))
+        vmin=topo_min, vmax=topo_max, cmap=pyplot.get_cmap(colormap))
 
     # convert from (row, column, band) to (band, row, column)
     shaded = rasterio.plot.reshape_as_raster(shaded)
@@ -199,6 +178,7 @@ def plot_topo(data, transform, res, topo_min=None, topo_max=None,
 def plot_depth(data, transform, res, solndir, fno, border=False, level=1,
                dry_tol=1e-5, vmin=None, vmax=None):
     """Plot depth on topography."""
+    from matplotlib import pyplot
 
     # a new figure and topo ax
     fig, ax = plot_topo(data, transform, res)
@@ -212,14 +192,8 @@ def plot_depth(data, transform, res, solndir, fno, border=False, level=1,
     # read
     soln.read(fno, solndir, file_format="binary", read_aux=os.path.isfile(auxpath))
 
-    # calculate total volume at each grid level
-    ncells, volumes = get_level_ncells_volumes(soln)
-
     print("Plotting frame No. {}, T={} secs ({} mins)".format(
         fno, soln.state.t, int(soln.state.t/60.)))
-
-    print("\tFrame No. {}: N Cells: {}; Fluid volume: {}".format(
-        fno, ncells, volumes))
 
     # plot
     im = plot_at_axes(soln, ax, field=0, border=border,
@@ -249,6 +223,7 @@ def plot_depth(data, transform, res, solndir, fno, border=False, level=1,
 
 def plot_soln_topo(topodata, extent, solndir, fno, border=False, level=1):
     """Plot the topology from solution (instead of from topo file)"""
+    from matplotlib import pyplot
     import rasterio.plot
 
     # empty solution object
@@ -287,7 +262,7 @@ def plot_soln_topo(topodata, extent, solndir, fno, border=False, level=1):
     # plot colorbar in a new axes for elevation
     cbarax = fig.add_axes([0.875, 0.125, 0.03, 0.75])
     im = ax.imshow(
-        topodata, extent=extent, cmap=pyplot.get_cmap("terrain"),
+        topodata, extent=extent, cmap="terrain",
         vmin=color_lims[0], vmax=color_lims[1], origin='lower')
     im.remove()
     cbar = pyplot.colorbar(im, cax=cbarax, ax=ax)
@@ -330,7 +305,7 @@ def plot_single_patch_topo(ax, state, level, aux, color_lims, border):
     rasterio.plot.show(
         data, ax=ax, transform=trans, adjust=None,
         vmin=color_lims[0], vmax=color_lims[1],
-        origin="lower", cmap=pyplot.get_cmap("terrain"))
+        origin="lower", cmap="terrain")
 
     if border:
         ax.plot(
@@ -385,74 +360,3 @@ def get_bounding_box(solndir, bg, ed, level):
 
     # finally, return
     return [xleft, xright, ybottom, ytop]
-
-def get_state_interpolator(state, field=0):
-    """
-    Get a Scipy interpolation object for a field on a AMR grid.
-    """
-
-    # the underlying patch in this state object
-    p = state.patch
-
-    # x, y arrays and also dx, dy for checking
-    x, dx = numpy.linspace(p.lower_global[0]+p.delta[0]/2.,
-                           p.upper_global[0]-p.delta[0]/2.,
-                           p.num_cells_global[0], retstep=True)
-    y, dy = numpy.linspace(p.lower_global[1]+p.delta[1]/2.,
-                           p.upper_global[1]-p.delta[1]/2.,
-                           p.num_cells_global[1], retstep=True)
-    assert numpy.abs(dx-p.delta[0]) < 1e-6, "{} {}".format(dx, p.delta[0])
-    assert numpy.abs(dy-p.delta[1]) < 1e-6, "{} {}".format(dy, p.delta[1])
-
-    # get the interpolation object
-    kx = ky = 3
-
-    if x.size <= 3:
-        kx = x.size - 1
-
-    if y.size <= 3:
-        ky = y.size - 1
-
-    interp = scipy.interpolate.RectBivariateSpline(
-        x, y, state.q[field, :, :],
-        [p.lower_global[0], p.upper_global[0], p.lower_global[1], p.upper_global[1]],
-        kx=kx, ky=ky)
-
-    return interp
-
-def interpolate(solution, x_target, y_target,
-                field=0, shift=[0., 0.], level=1,
-                clip=True, clip_less=1e-7, nodatavalue=-9999.):
-    """
-    Do the interpolation.
-    """
-
-    # allocate space for interpolated results
-    values = numpy.zeros((y_target.size, x_target.size), dtype=numpy.float64)
-
-    # loop through all AMR grids
-    for state in solution.states:
-
-        p = state.patch
-
-        # only do subsequent jobs if this is at the target level
-        if p.level != level:
-            continue
-
-        # get the indices of the target coordinates that are inside this patch
-        xid = numpy.where((x_target>=p.lower_global[0])&(x_target<=p.upper_global[0]))[0]
-        yid = numpy.where((y_target>=p.lower_global[1])&(y_target<=p.upper_global[1]))[0]
-
-        # get interpolation object
-        interpolator = get_state_interpolator(state, field)
-
-        # if any target coordinate located in thie patch, do interpolation
-        if xid.size and yid.size:
-            values[yid[:, None], xid[None, :]] = \
-                interpolator(x_target[xid]-shift[0], y_target[yid]-shift[1]).T
-
-    # apply nodatavalue to a threshold
-    if clip:
-        values[values<clip_less] = nodatavalue
-
-    return values
