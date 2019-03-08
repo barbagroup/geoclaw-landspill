@@ -31,77 +31,69 @@ the the modified version can be found [here](https://github.com/barbagroup/geocl
 The recommended way to run cases or use utilities in this repository is 
 through [Docker](#docker-usage) images or [Singularity](#singularity-usage) 
 images. But in case both Docker and Singularity are not available, follow the 
-instruction in this section to set up the environment.
+instruction in this section to set up the environment in Linux.
 
 ### I-1. Prerequisites
 
-1. [numpy](http://www.numpy.org/)
-2. [scipy](https://www.scipy.org/) (optional): used in the script `createnc.py`.
-3. [matplotlit](https://matplotlib.org/) (optiona): used in `plotdepths.py` and
-   `plottopos.py`.
-4. [requests](http://docs.python-requests.org/en/master/) (optional): used for 
-   automatic downloading of topography files
-5. [rasterio](https://github.com/mapbox/rasterio) (optional): used for automatic
-   downloading of topography files.
-6. [netCDF4](http://unidata.github.io/netcdf4-python/) (optional): used in the
-   script `createnc.py`.
+1. Python >= 3.6
+2. gfortran >= 8
+3. [numpy](http://www.numpy.org/) >= 1.15.4
+4. [requests](http://docs.python-requests.org/en/master/) >= 2.21.0
+5. [rasterio](https://github.com/mapbox/rasterio) >= 1.0.18
+6. [scipy](https://www.scipy.org/) >= 1.2.0: (optional) required by `createnc.py`.
+7. [matplotlib](https://matplotlib.org/) >= 3.0.2: (optiona) required by `plotdepths.py` and `plottopos.py`.
+8. [netCDF4](http://unidata.github.io/netcdf4-python/) >= 1.4.2: (optional) required by `createnc.py`.
 
-For users using [Anaconda](https://www.anaconda.com/), the following commands
-are for installing the prerequisites in shell (Linux) or CMD (Windows):
+The easiest way to get `gfortran` >= 8 is through the package manager in linux.
+For Arch Linux, do
 
 ```
-$ conda install numpy
-$ conda install scipy
-$ conda install matplotlib
-$ conda install rasterio
-$ conda install netcdf4
-$ conda install requests
+# pacman -S gcc-fortran
 ```
 
-#### Option B: Manually setting up the environment
+For Ubuntu Bionic, use:
 
-1. Download [Clawpack v5.5.0](https://github.com/clawpack/clawpack/releases/tag/v5.5.0)
-   and set it up according to Clawpack instruction.
-2. Grab the landspill-version GeoClaw and replace the original `geoclaw`
-   inside Clawpack. There has yet no release of the landspill-version
-   GeoClaw. The latest development version can be found
-   [here](https://github.com/piyueh/geoclaw).
-3. Set the following environment variables:
-  1. `CLAW`: the path to Clawpack
-  2. `FC`: Fortran compiler. Only gfortran 8 and Intel Fortran 19.0.0.117
-     have been tested. *Note: the default compilation flags are for gfortran,
-     so `FFLAGS` will have to be modified if using Intel Fortran or other
-     Fortran compilers.*
-  3. `PYTHONPATH`: prepend `${CLAW}` to original `${PYTHONPATH}`.
-4. Download/pull this repo.
-5. Install the prerequisites (see the next subsection)
-6. Go to the folder of this repo and set it up through `$ python setup.py`.
-   This will download required data and compile a binary executable for
-   the solver.
+```
+# apt-get install gfortran-8
+```
 
+Regarding the Python dependencies, for users using 
+[Anaconda](https://www.anaconda.com/), use the following commands to install 
+the Python prerequisites:
 
-#### Option A: Using Docker image
+```
+$ conda install numpy=1.15.4
+$ conda install requests=2.21.0
+$ conda install rasterio=1.0.18
+$ conda install scipy=1.2.0
+$ conda install matplotlib=3.0.2
+$ conda install netcdf4=1.4.2
+```
 
-If choosing to use Docker image, the docker image is located at DockerHub
-`barbagroup/landspill:bionic`. Everything needed is in the image.
+Or with `pip` (for Python 3):
 
-1. Pull the image through:  
-   `$ docker pull barbagroup/landspill:bionic`
-2. Create a container with the image and log into a bash shell:  
-   `$ docker run -it --name landspill barbagroup/landspill:applications /bin/bash`
-3. The repo is at `~/geoclaw-landspill-cases`. There is already a compiled
-   solver in `bin` folder and required topography files in `common_files`.
+```
+$ pip install -I \
+    numpy==1.15.4 \
+    requests==2.21.0 \
+    rasterio==1.0.18 \
+    scipy==1.2.0 \
+    matplotlib==3.0.2 \
+    netcdf4==1.4.2
+```
 
-#### Prerequisites
+### I-2. Steps
+
+1. Clone this repositroy or download the tarbal of the latest release.
+2. Make sure all prerequisites are available.
+3. Go to the repository folder.
+3. Run `$ python setup.py`.
 
 ------------------------------------------------------------------------
 ## II. Running a case
 
-Use the python script `run.py` to run a case in this repo. Usage:
-```
-$ python run.py case
-```
-Currently, there are nine cases:
+Currently, there are nine cases, all under the subfolder `cases`:
+
 1. utah_gasoline
 2. utah_gasoline_no_evaporation
 3. utah_hill_maya
@@ -112,37 +104,104 @@ Currently, there are nine cases:
 8. utah_maya
 9. utah_maya_no_evaporation
 
+Users can use the Python script `run.py` under the folder `utilities` to run 
+these cases. The usage of of this script is
+
+```
+$ python run.py <path to the case>
+```
+
+For example, if a user is currently under the repository folder 
+`geoclaw-landspill-cases`, and he/she wants to run the example case `utah_maya`
+in the folder `cases`, then do
+
+```
+$ python utilities/run.py cases/utah_maya
+```
+
+The script `run.py` is executable, so the user can execute it directly:
+
+```
+$ utilities/run.py cases/utah_maya
+```
+
+The script `run.py` can automatically download topography data and hydrologic
+data from USGS database. So after running a case with `run.py`, users should find
+the topography and hydrologic data files at the path specified in the case setup.
+For example, in the `utah_maya` case, the `utah_maya/setrun.py` specifies that
+the topography file is `cases/common-files/salt_lake_1.asc`. But `run.py` can
+not find `cases/common-files/salt_lake_1.asc`, so it will try to download the 
+topography data from USGS database according to the extent set in the 
+`utah_maya/setrun.py`, and it will save the data to `cases/common-files/salt_lake_1.asc`.
+The hydrologica data follows the same rule. If in the future a user creates 
+his/her own simulation case without providing topography/hydrology data, 
+the `run.py` will do the same. Currently the `run.py` can only automatically 
+download data for the regions inside the US.
+
+To control how many CPU cores are used for a simulation, set the environment
+variable `OMP_NUM_THREADS`. For example, to use only 4 cores for the `utah_maya`
+case, do
+```
+$ export OMP_NUM_THREADS=4
+$ python utilities/run.py cases/utah_maya
+```
+
+Or simply
+```
+$ OMP_NUM_THREADS=4 python utilities/run.py cases/utah_maya
+```
+
+After the simulation, the result files will be in `<case folder>/_output`.
+
 ------------------------------------------------------------------------
-## III. Visualizing depth results with `matplotlib`
+## III. Other utilities
+
+The repository provides some other utilities for post-processing.
+
+### III-1. Visualizing depth results with `matplotlib`
 
 Use the python script `plotdepths.py` to visualize depth results at each
 output time. Usage:
 ```
-$ python plotdepths.py [-h] [--level LEVEL] [--continue] [--border] case
+$ python plotdepths.py [-h] [--level LEVEL] [--dry-tol DRY_TOL] [--cmax CMAX]
+                       [--cmin CMIN] [--frame-bg FRAME_BG] [--frame-ed FRAME_ED]
+                       [--continue] [--border] [--nprocs NPROCS]
+                       case
 ```
+
+
 Arguments and Options:
 ```
 positional arguments:
-  case           the name of the case
+  case                 the name of the case
 
 optional arguments:
-  -h, --help     show this help message and exit
-  --level LEVEL  plot depth result at a specific AMR level (default: finest level)
-  --continue     continue creating figures in the existing _plot folder
-  --border       also plot the borders of grid patches
+  -h, --help           show this help message and exit
+  --level LEVEL        plot depth result at a specific AMR level (default: finest level)
+  --dry-tol DRY_TOL    tolerance for dry state (default: obtained from setrun.py)
+  --cmax CMAX          maximum value in the depth colorbar (default: obtained from solution)
+  --cmin CMIN          minimum value in the depth colorbar (default: obtained from solution)
+  --frame-bg FRAME_BG  customized start frame no. (default: 0)
+  --frame-ed FRAME_ED  customized end frame no. (default: obtained from setrun.py)
+  --continue           continue creating figures in existing _plot folder
+  --border             also plot the borders of grid patches
+  --nprocs NPROCS      number of CPU threads used for plotting (default: 1)
 ```
-The plots will be in under `[case]/_plots/depth/level[xx]`. For example,
-if plotting the results from ***utah_hill_maya*** and without specifying a
-specific AMR level, then the plots will be in `utah_hill_maya/_plots/depth/level05`.
 
-------------------------------------------------------------------------
-## IV. Creating a NetCDF file with CF convention
+The plots will be in under `<case folder>/_plots/depth/level<xx>`. For example,
+if plotting the results of `utah_hill_maya` and without specifying a
+specific AMR level, then the plots will be in `utah_hill_maya/_plots/depth/level02`.
+
+### III-2. Creating a NetCDF file with CF convention
 
 The Python script `createnc.py` can be used to create a NetCDF file with 
 temporal depth data for a case. Usage:
 ```
-$ python createnc.py [-h] [--level LEVEL] [--frame-bg FRAME_BG] [--frame-ed FRAME_ED] case
+$ python createnc.py [-h] [--level LEVEL] [--frame-bg FRAME_BG]
+                     [--frame-ed FRAME_ED]
+                     case
 ```
+
 Arguments and Options:
 ```
 positional arguments:
@@ -151,10 +210,11 @@ positional arguments:
 optional arguments:
   -h, --help           show this help message and exit
   --level LEVEL        use data from a specific AMR level (default: finest level)
-  --frame-bg FRAME_BG  customized start farme no. (default: 0)
-  --frame-ed FRAME_ED  customized end farme no. (default: get from setrun.py)
+  --frame-bg FRAME_BG  customized start frame no. (default: 0)
+  --frame-ed FRAME_ED  customized end frame no. (default: get from setrun.py)
 ```
 
-The resulting NetCDF file will be `[case]/[case]_level[XX].nc`. For example,
-if creating a NetCDF file from ***utah_hill_maya*** and without sepcifying
-a specific AMR level, then the NetCDF file will be `utah_hill_maya/utah_hill_maya_level05.nc`.
+The resulting NetCDF file will be `<case folder>/<case name>_level<XX>.nc`.
+For example, if creating a NetCDF file from `utah_hill_maya` and without
+sepcifying a specific AMR level, then the NetCDF file will be
+`utah_hill_maya/utah_hill_maya_level02.nc`.
