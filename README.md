@@ -277,6 +277,41 @@ optional arguments:
 ------------------------------------------------------------------------
 ## 4. Docker usage
 
+We provide two Docker images on 
+[DockerHub](https://hub.docker.com/r/barbagroup/landspill).
+The first image is the one based on Ubuntu Bionic, which should work on majority
+of the systems. The second one is based on Ubuntu Trusty, which is for the systems
+with old Linux kernels (like kernel 2.6 on many Red Hat clusters).
+
+Pull the Docker image through:
+```
+$ docker pull barbagroup/landspill:bionic
+```
+or
+```
+$ docker pull barbagroup/landspill:trusty
+```
+
+To get into the shell of a Docker container:
+```
+$ docker run -it --name landspill barbagroup/landspill:bionic
+```
+After getting into the shell, the example cases are under `landspill-examples`.
+All executable utilitiy Python scripts are in the `PATH` environment variable.
+
+For example, to run the simulation of the case `utah_maya` with 4 CPU cores, and 
+suppose the current directory is the home directory, do
+```
+$ OMP_NUM_THREADS=4 run.py landspill-examples/utah_maya 
+```
+
+Or to generate depth plots of `utah_maya` after simulation, for example, do:
+```
+$ plotdepths.py landspill-examples/utah_maya
+```
+
+To exit the shell of the Docker container, simply execute `exit` in the shell.
+
 ------------------------------------------------------------------------
 ## 5. Singularity usage
 
