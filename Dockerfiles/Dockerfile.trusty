@@ -37,22 +37,8 @@ RUN wget --quiet \
 # set up necessary environment variables
 ENV PYTHON=python \
     FC=gfortran-8 \
-    CLAW=/opt/clawpack \
-    PYTHONPATH=/opt/clawpack \
     MPLBACKEND=agg \
-    PATH=/opt/geoclaw-landspill-cases:$PATH
-
-# clone clawpack and its submodules
-RUN . /opt/conda/etc/profile.d/conda.sh \
- && conda activate base \
- && cd /opt \
- && git clone --branch v5.5.0 https://github.com/clawpack/clawpack.git \
- && cd clawpack \
- && $PYTHON setup.py git-dev \
- && cd geoclaw \
- && git remote add barbagroup https://github.com/barbagroup/geoclaw.git \
- && git fetch barbagroup pull/17/head:pr-17 \
- && git checkout pr-17
+    PATH=/opt/geoclaw-landspill-cases/utilities:$PATH
 
 # clone geoclaw-landspill-cases
 RUN . /opt/conda/etc/profile.d/conda.sh \
@@ -70,18 +56,7 @@ RUN sed -i "1s/^/conda\ activate\ base\n/" /etc/profile \
 
 # add a new non-root user and copy example case folders
 RUN useradd -ms /bin/bash landspill \
- && mkdir /home/landspill/landspill-examples \
- && cp -r \
-        /opt/geoclaw-landspill-cases/utah_gasoline \
-        /opt/geoclaw-landspill-cases/utah_gasoline_no_evaporation \
-        /opt/geoclaw-landspill-cases/utah_hill_maya \
-        /opt/geoclaw-landspill-cases/utah_hydrofeatures_gasoline \
-        /opt/geoclaw-landspill-cases/utah_hydrofeatures_gasoline_no_evaporation \
-        /opt/geoclaw-landspill-cases/utah_hydrofeatures_maya \
-        /opt/geoclaw-landspill-cases/utah_hydrofeatures_maya_no_evaporation \
-        /opt/geoclaw-landspill-cases/utah_maya \
-        /opt/geoclaw-landspill-cases/utah_maya_no_evaporation \
-        /home/landspill/landspill-examples \
+ && cp -r /opt/geoclaw-landspill-cases/cases /home/landspill/landspill-examples \
  && chown landspill:landspill -R /home/landspill/landspill-examples
 
 # change user to landspill
