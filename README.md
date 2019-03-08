@@ -2,9 +2,9 @@ geoclaw-landspill-cases
 ==========================
 
 This repository contains a collection of land-spill simulation cases and 
-utilities. It helps the repoducibility of our research, and in the meanwhile,
+utilities. It helps the reproducibility of our research, and in the meanwhile,
 provides utility tools to ease the workflow of overland flow simulation with
-GeoClaw. In additons, the Docker image provided by this repository can help
+GeoClaw. In addition, the Docker image provided by this repository can help
 Windows user run simulations with GeoClaw, which does not officially support
 Windows. And the Singularity image makes running GeoClaw on HPC clusters easier.
 Most supercomputers and HPC clusters do not support Docker, and Singularity is
@@ -13,7 +13,7 @@ the only option.
 The solver used for overland flow simulations is a modified version of 
 [GeoClaw](http://www.clawpack.org/geoclaw.html). Currently, this modified 
 version has not yet been merged back into the upstream. And the source code of 
-the the modified version can be found [here](https://github.com/barbagroup/geoclaw).
+the modified version can be found [here](https://github.com/barbagroup/geoclaw).
 
 ## Content
 1. [Setting up](#1-setting-up)
@@ -44,7 +44,7 @@ instruction in this section to set up the environment in Linux.
 7. [matplotlib](https://matplotlib.org/) >= 3.0.2: (optiona) required by `plotdepths.py` and `plottopos.py`.
 8. [netCDF4](http://unidata.github.io/netcdf4-python/) >= 1.4.2: (optional) required by `createnc.py`.
 
-The easiest way to get `gfortran` >= 8 is through the package manager in linux.
+The easiest way to get `gfortran` >= 8 is through the package manager in Linux.
 For Arch Linux, do
 
 ```
@@ -105,7 +105,7 @@ Currently, there are nine cases, all under the subfolder `cases`:
 9. utah_maya_no_evaporation
 
 Users can use the Python script `run.py` under the folder `utilities` to run 
-these cases. The usage of of this script is
+these cases. The usage of this script is
 
 ```
 $ python run.py <path to the case>
@@ -126,16 +126,16 @@ $ utilities/run.py cases/utah_maya
 ```
 
 The script `run.py` can automatically download topography data and hydrologic
-data from USGS database. So after running a case with `run.py`, users should find
+data from the USGS database. So after running a case with `run.py`, users should find
 the topography and hydrologic data files at the path specified in the case setup.
 For example, in the `utah_maya` case, the `utah_maya/setrun.py` specifies that
 the topography file is `cases/common-files/salt_lake_1.asc`. But `run.py` can
 not find `cases/common-files/salt_lake_1.asc`, so it will try to download the 
-topography data from USGS database according to the extent set in the 
+topography data from the USGS database according to the extent set in the 
 `utah_maya/setrun.py`, and it will save the data to `cases/common-files/salt_lake_1.asc`.
-The hydrologica data follows the same rule. If in the future a user creates 
+The hydrologic data follows the same rule. If in the future a user creates 
 his/her own simulation case without providing topography/hydrology data, 
-the `run.py` will do the same. Currently the `run.py` can only automatically 
+the `run.py` will do the same. Currently, the `run.py` can only automatically 
 download data for the regions inside the US.
 
 To control how many CPU cores are used for a simulation, set the environment
@@ -185,7 +185,7 @@ For example, if creating a NetCDF file from `utah_hill_maya` and without
 sepcifying a specific AMR level, then the NetCDF file will be
 `utah_hill_maya/utah_hill_maya_level02.nc`.
 
-### 3-2. Visulaization of depth
+### 3-2. Visualization of depth
 
 Use the python script `plotdepths.py` to visualize depth results at each
 output time. Usage:
@@ -270,8 +270,8 @@ positional arguments:
 
 optional arguments:
   -h, --help           show this help message and exit
-  --frame-bg FRAME_BG  customized start farme no. (default: 0)
-  --frame-ed FRAME_ED  customized end farme no. (default: get from setrun.py)
+  --frame-bg FRAME_BG  customized start frame no. (default: 0)
+  --frame-ed FRAME_ED  customized end frame no. (default: get from setrun.py)
 ```
 
 ------------------------------------------------------------------------
@@ -279,7 +279,7 @@ optional arguments:
 
 We provide two Docker images on 
 [DockerHub](https://hub.docker.com/r/barbagroup/landspill).
-The first image is the one based on Ubuntu Bionic, which should work on majority
+The first image is the one based on Ubuntu Bionic, which should work on the majority
 of the systems. The second one is based on Ubuntu Trusty, which is for the systems
 with old Linux kernels (like kernel 2.6 on old clusters at many universities).
 
@@ -297,7 +297,7 @@ To get into the shell of a Docker container:
 $ docker run -it --name landspill barbagroup/landspill:bionic
 ```
 After getting into the shell, the example cases are under `landspill-examples`.
-All executable utilitiy Python scripts are in the `PATH` environment variable.
+All executable utility Python scripts are in the `PATH` environment variable.
 
 For example, to run the simulation of the case `utah_maya` with 4 CPU cores, and 
 suppose the current directory is the home directory, do
@@ -319,7 +319,7 @@ For many HPC clusters or supercomputers, Docker is not available due to
 security concerns, and [Singularity](https://www.sylabs.io/singularity/) is the 
 only container technology available. Similar to the Docker images, we provide 
 two Singularity images on [SingularityHub](https://singularity-hub.org/collections/2381). 
-The first one is based on Ububtu Bionic, and the second is based on Ubuntu Trusty.
+The first one is based on Ubuntu Bionic, and the second is based on Ubuntu Trusty.
 The Trusty version is specifically for the machines with old Linux kernels.
 
 As an example usage, to pull the Bionic image and save to a local image file, do
@@ -327,7 +327,7 @@ As an example usage, to pull the Bionic image and save to a local image file, do
 $ singularity pull lanspill.sif shub://barbagroup/geoclaw-landspill-cases:bionic
 ```
 
-Note, the Singulairty version used is v3.1. If using older Singularity,
+Note, the Singularity version used is v3.1. If using older Singularity,
 like those with v2.x, the Singularity commands may be different. For example, 
 with Singularity v2.5.2, the command to do the same thing is
 ```
@@ -339,7 +339,7 @@ Singularity, please consult the Singularity manual for the usage.
 An advantage of Singularity is that it will map and bind the current directory
 on the host to a Singularity container automatically. That means, if a user has
 a simulation case on the host, with a Singularity image, he/she can launch the
-simulation directly from the host machine without loging into the container.
+simulation directly from the host machine without logging into the container.
 
 For example, suppose we are now on the host machine and has a simulation case
 `utah_gasoline` under the current directory. To run the simulation with the
@@ -348,7 +348,7 @@ Singularity image we just downloaded, do
 $ singularity run --app run landspill.sif utah_gasoline
 ```
 
-The `--app run` means Sinuglarity will apply the `run.py` script in the 
+The `--app run` means Singularity will apply the `run.py` script in the 
 `landspill.sif` image to the case folder `utah_gasoline` on the host.
 
 All utilities in the repository can be called by the same method. To see all
