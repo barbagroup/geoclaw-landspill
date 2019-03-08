@@ -16,24 +16,24 @@ version has not yet been merged back into the upstream. And the source code of
 the the modified version can be found [here](https://github.com/barbagroup/geoclaw).
 
 ## Content
-1. [Setting up](#setting-up)
-    1. [Prerequisites](#prerequisites)
-    2. [Steps](#steps)
-2. [Running a case](#running-a-case)
-3. [Other utilities](#other-utilities)
-4. [Docker usage](#docker-usage)
-5. [Singularity usage](#singularity-usage)
-6. [Contact](#contact)
+1. [Setting up](#1-setting-up)
+    1. [Prerequisites](#1-1-prerequisites)
+    2. [Steps](#1-2-steps)
+2. [Running a case](#2-running-a-case)
+3. [Other utilities](#3-other-utilities)
+4. [Docker usage](#4-docker-usage)
+5. [Singularity usage](#5-singularity-usage)
+6. [Contact](#6-contact)
 
 ------------------------------------------------------------------------
-## I. Setting up
+## 1. Setting up
 
 The recommended way to run cases or use utilities in this repository is 
-through [Docker](#docker-usage) images or [Singularity](#singularity-usage) 
+through [Docker](#4-docker-usage) images or [Singularity](#5-singularity-usage) 
 images. But in case both Docker and Singularity are not available, follow the 
 instruction in this section to set up the environment in Linux.
 
-### I-1. Prerequisites
+### 1-1. Prerequisites
 
 1. Python >= 3.6
 2. gfortran >= 8
@@ -82,7 +82,7 @@ $ pip install -I \
     netcdf4==1.4.2
 ```
 
-### I-2. Steps
+### 1-2. Steps
 
 1. Clone this repositroy or download the tarbal of the latest release.
 2. Make sure all prerequisites are available.
@@ -90,7 +90,7 @@ $ pip install -I \
 3. Run `$ python setup.py`.
 
 ------------------------------------------------------------------------
-## II. Running a case
+## 2. Running a case
 
 Currently, there are nine cases, all under the subfolder `cases`:
 
@@ -154,11 +154,38 @@ $ OMP_NUM_THREADS=4 python utilities/run.py cases/utah_maya
 After the simulation, the result files will be in `<case folder>/_output`.
 
 ------------------------------------------------------------------------
-## III. Other utilities
+## 3. Other utilities
 
 The repository provides some other utilities for post-processing.
 
-### III-1. Visualizing depth results with `matplotlib`
+### 3-1. NetCDF raster files with CF convention
+
+The Python script `createnc.py` can be used to create a NetCDF file with 
+temporal depth data for a case. Usage:
+```
+$ python createnc.py [-h] [--level LEVEL] [--frame-bg FRAME_BG]
+                     [--frame-ed FRAME_ED]
+                     case
+```
+
+Arguments and Options:
+```
+positional arguments:
+  case                 the name of the case
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --level LEVEL        use data from a specific AMR level (default: finest level)
+  --frame-bg FRAME_BG  customized start frame no. (default: 0)
+  --frame-ed FRAME_ED  customized end frame no. (default: get from setrun.py)
+```
+
+The resulting NetCDF file will be `<case folder>/<case name>_level<XX>.nc`.
+For example, if creating a NetCDF file from `utah_hill_maya` and without
+sepcifying a specific AMR level, then the NetCDF file will be
+`utah_hill_maya/utah_hill_maya_level02.nc`.
+
+### 3-2. Visulaization of depth
 
 Use the python script `plotdepths.py` to visualize depth results at each
 output time. Usage:
@@ -192,29 +219,66 @@ The plots will be in under `<case folder>/_plots/depth/level<xx>`. For example,
 if plotting the results of `utah_hill_maya` and without specifying a
 specific AMR level, then the plots will be in `utah_hill_maya/_plots/depth/level02`.
 
-### III-2. Creating a NetCDF file with CF convention
+### 3-3. Visualization of elevation data used by AMR grids
 
-The Python script `createnc.py` can be used to create a NetCDF file with 
-temporal depth data for a case. Usage:
+To see how elevation data is evaluated on AMR grids, use the script `plottopos.py`:
+
 ```
-$ python createnc.py [-h] [--level LEVEL] [--frame-bg FRAME_BG]
-                     [--frame-ed FRAME_ED]
-                     case
+$ python plottopos.py [-h] [--level LEVEL] [--cmax CMAX] [--cmin CMIN]
+                      [--frame-bg FRAME_BG] [--frame-ed FRAME_ED] [--continue]
+                      [--border]
+                      case
 ```
 
-Arguments and Options:
+And the arguments:
+
 ```
 positional arguments:
   case                 the name of the case
 
 optional arguments:
   -h, --help           show this help message and exit
-  --level LEVEL        use data from a specific AMR level (default: finest level)
-  --frame-bg FRAME_BG  customized start frame no. (default: 0)
-  --frame-ed FRAME_ED  customized end frame no. (default: get from setrun.py)
+  --level LEVEL        plot depth result at a specific AMR level (default: finest level)
+  --cmax CMAX          maximum value in the depth colorbar (default: obtained from solution)
+  --cmin CMIN          minimum value in the depth colorbar (default: obtained from solution)
+  --frame-bg FRAME_BG  customized start farme no. (default: 0)
+  --frame-ed FRAME_ED  customized end farme no. (default: obtained from setrun.py)
+  --continue           continue creating figures in existing _plot folder
+  --border             also plot the borders of grid patches
 ```
 
-The resulting NetCDF file will be `<case folder>/<case name>_level<XX>.nc`.
-For example, if creating a NetCDF file from `utah_hill_maya` and without
-sepcifying a specific AMR level, then the NetCDF file will be
-`utah_hill_maya/utah_hill_maya_level02.nc`.
+The topography plots generated from this script are different from the topography
+file (the DEM file). The elevation values in these plots are the values in the 
+AMR solution files. The purpose of these plots is to examine the correctness
+of the elevation data used in simulations.
+
+### 3-4. Total volume on the ground
+
+The script `calculatevolume.py` can be used to calculate the total fluid volume
+on the ground at different time frame and different AMR level. It creates a CSV
+file called `total_volume.csv` under the case folder.
+
+```
+$ python calculatevolume.py [-h] [--frame-bg FRAME_BG] [--frame-ed FRAME_ED] case
+```
+
+Arguments:
+
+```
+positional arguments:
+  case                 the name of the case
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --frame-bg FRAME_BG  customized start farme no. (default: 0)
+  --frame-ed FRAME_ED  customized end farme no. (default: get from setrun.py)
+```
+
+------------------------------------------------------------------------
+## 4. Docker usage
+
+------------------------------------------------------------------------
+## 5. Singularity usage
+
+------------------------------------------------------------------------
+## 6. Contact
