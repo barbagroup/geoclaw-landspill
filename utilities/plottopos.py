@@ -14,6 +14,7 @@ import os
 import sys
 import datetime
 import argparse
+import rasterio
 from matplotlib import pyplot
 
 
@@ -53,10 +54,6 @@ if __name__ == "__main__":
     parser.add_argument(
         '--border', dest="border", action="store_true",
         help='also plot the borders of grid patches')
-
-    parser.add_argument(
-        '--shaded', dest="shaded", action="store_true",
-        help='whether to make elevation map shaded or not')
 
     # process arguments
     args = parser.parse_args()
@@ -98,7 +95,6 @@ if __name__ == "__main__":
 
     # import utilities
     from pphelper import plot_soln_topo, get_bounding_box
-    from clawpack.geoclaw import topotools
 
     # load setup.py
     sys.path.insert(0, casepath) # add case folder to module search path
@@ -132,8 +128,8 @@ if __name__ == "__main__":
         args.level = rundata.amrdata.amr_levels_max
 
     # find bounding box we're going to use for plots
-    x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed = \
-        get_bounding_box(outputpath, frame_bg, frame_ed, args.level)
+    x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed = get_bounding_box(
+        outputpath, frame_bg, frame_ed, rundata.amrdata.amr_levels_max)
 
     Dx = (x_crop_ed - x_crop_bg) * 0.1
     Dy = (y_crop_ed - y_crop_bg) * 0.1
@@ -144,13 +140,22 @@ if __name__ == "__main__":
 
     # read topo file
     topofilename = os.path.join(casepath, rundata.topo_data.topofiles[0][-1])
-    topo_raw = topotools.Topography()
-    topo_raw.read(topofilename, topo_type=3)
-    topo_crop = topo_raw.crop([x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed])
+    raster = rasterio.open(topofilename)
 
-    # source points
-    source_x = rundata.landspill_data.point_sources.point_sources[0][0][0]
-    source_y = rundata.landspill_data.point_sources.point_sources[0][0][1]
+    # window/extent object enclosing the cropped region
+    window = raster.window(x_crop_bg, y_crop_bg, x_crop_ed, y_crop_ed)
+
+    # read the cropped data
+    topodata = raster.read(1, window=window)
+
+    # source points; assume only one point source
+    source = rundata.landspill_data.point_sources.point_sources[0][0]
+
+    # close the raster file
+    raster.close()
+
+    # create an extent list
+    extent = [x_crop_bg, x_crop_ed, y_crop_bg, y_crop_ed]
 
     # folder of plots
     plotdir = os.path.join(casepath, "_plots/topos/level{:02}".format(args.level))
@@ -173,8 +178,13 @@ if __name__ == "__main__":
             continue
 
         fig, ax = plot_soln_topo(
-            topo_crop, outputpath, frameno,
-            args.border, args.level, args.shaded)
+            topodata, extent, outputpath, frameno, args.border, args.level)
+
+        # plot point source
+        line = ax.plot(source[0], source[1], 'r.', markersize=10)
+
+        # label
+        ax.legend(line, ["source"])
 
         # save image
         fig.savefig(figpath, dpi=90)

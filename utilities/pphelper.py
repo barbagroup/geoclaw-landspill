@@ -15,7 +15,6 @@ import numpy
 import scipy.interpolate
 import matplotlib
 from matplotlib import pyplot
-from clawpack.geoclaw import topotools
 from clawpack import pyclaw
 
 
@@ -167,7 +166,7 @@ def plot_topo(data, transform, res, topo_min=None, topo_max=None,
     # get shaded RGBA data
     shaded = ls.shade(
         data, blend_mode="overlay", vert_exag=3, dx=res[0], dy=res[1],
-        vmin=topo_min, vmax=topo_max, cmap=pyplot.cm.terrain)
+        vmin=topo_min, vmax=topo_max, cmap=pyplot.get_cmap("terrain"))
 
     # convert from (row, column, band) to (band, row, column)
     shaded = rasterio.plot.reshape_as_raster(shaded)
@@ -248,14 +247,9 @@ def plot_depth(data, transform, res, solndir, fno, border=False, level=1,
 
     return fig, ax
 
-def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
+def plot_soln_topo(topodata, extent, solndir, fno, border=False, level=1):
     """Plot the topology from solution (instead of from topo file)"""
-
-    # a new figure
-    fig = pyplot.figure(0, (11, 8), 90)
-
-    # create an axes at 1, 3, 1
-    ax = fig.add_axes([0.1, 0.125, 0.75, 0.75])
+    import rasterio.plot
 
     # empty solution object
     soln = pyclaw.Solution()
@@ -270,108 +264,11 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
         fno, soln.state.t, int(soln.state.t/60.)))
 
     # colormap min & max
-    topo_min = topo.Z.mean() - 2 * topo.Z.std()
-    topo_max = topo.Z.mean() + 2 * topo.Z.std()
+    color_lims = [topodata.mean() - 2 * topodata.std(),
+                  topodata.mean() + 2 * topodata.std()]
 
-    # shift of physical coordinates to image pixel coordinates
-    shift = [topo.X.min()-topo.delta[0]/2, topo.Y.min()-topo.delta[1]/2]
-
-    # light source object
-    ls = matplotlib.colors.LightSource(315, 45)
-
-    # plot each patch on level 1
-    for state in soln.states:
-        p = state.patch
-
-        if p.level != 1:
-            continue
-
-        x = numpy.linspace(p.lower_global[0], p.upper_global[0],
-                           p.num_cells_global[0]+1, retstep=True)[0] - shift[0]
-        y = numpy.linspace(p.lower_global[1], p.upper_global[1],
-                           p.num_cells_global[1]+1, retstep=True)[0] - shift[1]
-
-        if os.path.isfile(auxpath):
-            data = state.aux[0, :, :]
-        else:
-            data = state.q[3, :, :] - state.q[0, :, :]
-
-        if shaded:
-            im = ax.imshow(
-                ls.shade(data.T, blend_mode='soft', vert_exag=3,
-                         dx=p.delta[0], dy=p.delta[1],
-                         vmin=topo_min, vmax=topo_max,
-                         cmap=pyplot.cm.terrain),
-                origin='lower',
-                extent=[x[0], x[-1], y[0], y[-1]])
-        else:
-            im = ax.pcolormesh(
-                x, y, data.T,
-                shading='flat', edgecolors='None',
-                vmin=topo_min, vmax=topo_max, cmap=pyplot.cm.terrain)
-
-        if level == 1 and border:
-            ax.plot([x[0], x[-1], x[-1], x[0], x[0]],
-                    [y[0], y[0], y[-1], y[-1], y[0]], 'k-', lw=1)
-
-    # plot each patch on target level
-    if level != 1:
-        for state in soln.states:
-            p = state.patch
-
-            if p.level != level:
-                continue
-
-            x = numpy.linspace(p.lower_global[0], p.upper_global[0],
-                               p.num_cells_global[0]+1, retstep=True)[0] - shift[0]
-            y = numpy.linspace(p.lower_global[1], p.upper_global[1],
-                               p.num_cells_global[1]+1, retstep=True)[0] - shift[1]
-
-            if os.path.isfile(auxpath):
-                data = state.aux[0, :, :]
-            else:
-                data = state.q[3, :, :] - state.q[0, :, :]
-
-            if shaded:
-                im = ax.imshow(
-                    ls.shade(data.T, blend_mode='soft', vert_exag=3,
-                             dx=p.delta[0], dy=p.delta[1],
-                             vmin=topo_min, vmax=topo_max,
-                             cmap=pyplot.cm.terrain),
-                    origin='lower',
-                    extent=[x[0], x[-1], y[0], y[-1]])
-            else:
-                im = ax.pcolormesh(
-                    x, y, data.T,
-                    shading='flat', edgecolors='None',
-                    vmin=topo_min, vmax=topo_max, cmap=pyplot.cm.terrain)
-
-            if border:
-                ax.plot([x[0], x[-1], x[-1], x[0], x[0]],
-                        [y[0], y[0], y[-1], y[-1], y[0]], 'k-', lw=1)
-
-    ax.set_xlim(0, topo.Z.shape[1])
-    ax.set_ylim(0, topo.Z.shape[0])
-
-    xticks_loc = ax.get_xticks()
-    xticks = numpy.array(
-        [i/topo.Z.shape[1]*(topo.extent[1]-topo.extent[0])+topo.extent[0]
-         for i in xticks_loc]).round(2)
-    ax.set_xticklabels(xticks, rotation=-45, ha="left")
-
-    yticks_loc = ax.get_yticks()
-    yticks = numpy.array(
-        [i/topo.Z.shape[0]*(topo.extent[3]-topo.extent[2])+topo.extent[1]
-         for i in yticks_loc]).round(2)
-    ax.set_yticklabels(yticks)
-
-    # plot colorbar in a new axes for elevation
-    cbarax = fig.add_axes([0.875, 0.125, 0.03, 0.75])
-    im = ax.imshow(topo.Z, cmap=pyplot.cm.terrain,
-                   vmin=topo_min, vmax=topo_max, origin='lower')
-    im.remove()
-    cbar = pyplot.colorbar(im, cax=cbarax, ax=ax)
-    cbar.set_label("Elevation (m)")
+    # a new figure
+    fig = pyplot.figure(0, (11, 8), 90)
 
     # figure title
     fig.suptitle("Elevation data in AMR grid patches, "
@@ -380,7 +277,70 @@ def plot_soln_topo(topo, solndir, fno, border=False, level=1, shaded=False):
                  horizontalalignment="center",
                  verticalalignment="bottom")
 
+    # create an axes at 1, 3, 1
+    ax = fig.add_axes([0.1, 0.125, 0.75, 0.75])
+
+    # coordinate limit
+    ax.set_xlim(extent[0], extent[1])
+    ax.set_ylim(extent[2], extent[3])
+
+    # plot colorbar in a new axes for elevation
+    cbarax = fig.add_axes([0.875, 0.125, 0.03, 0.75])
+    im = ax.imshow(
+        topodata, extent=extent, cmap=pyplot.get_cmap("terrain"),
+        vmin=color_lims[0], vmax=color_lims[1], origin='lower')
+    im.remove()
+    cbar = pyplot.colorbar(im, cax=cbarax, ax=ax)
+    cbar.set_label("Elevation (m)")
+
+    # plot each patch on level 1
+    for state in soln.states:
+        plot_single_patch_topo(
+            ax, state, 1, os.path.isfile(auxpath), color_lims,
+            (level == 1 and border))
+
+    # if the target level is one, exit the function now
+    if level == 1:
+        return fig, ax
+
+    # plot each patch on target level
+    for state in soln.states:
+        plot_single_patch_topo(
+            ax, state, level, os.path.isfile(auxpath), color_lims, border)
+
     return fig, ax
+
+def plot_single_patch_topo(ax, state, level, aux, color_lims, border):
+    """Plot elevation data of a single AMR grid patch."""
+    import rasterio
+
+    p = state.patch
+
+    if p.level != level:
+        return
+
+    trans = rasterio.transform.from_origin(
+        p.lower_global[0], p.upper_global[1], p.delta[0], p.delta[1])
+
+    if aux:
+        data = state.aux[0, :, :].T
+    else:
+        data = state.q[3, :, :].T - state.q[0, :, :].T
+
+    rasterio.plot.show(
+        data, ax=ax, transform=trans, adjust=None,
+        vmin=color_lims[0], vmax=color_lims[1],
+        origin="lower", cmap=pyplot.get_cmap("terrain"))
+
+    if border:
+        ax.plot(
+            [p.lower_global[0], p.upper_global[0], p.upper_global[0],
+             p.lower_global[0], p.lower_global[0]],
+            [p.lower_global[1], p.lower_global[1], p.upper_global[1],
+             p.upper_global[1], p.lower_global[1]],
+            'k-', lw=1)
+
+    return ax
 
 def get_bounding_box(solndir, bg, ed, level):
     """
@@ -496,73 +456,3 @@ def interpolate(solution, x_target, y_target,
         values[values<clip_less] = nodatavalue
 
     return values
-
-class TopographyMod(topotools.Topography):
-    """A Topography class without lambda."""
-    def __init__(self, path=None, topo_func=None, topo_type=None,
-                 unstructured=False):
-        r"""Topography initialization routine.
-
-        See :class:`Topography` for more info.
-
-        """
-
-        self.path = path
-        self.topo_func = topo_func
-        self.topo_type = topo_type
-
-        self.unstructured = unstructured
-        self.no_data_value = -9999
-
-        # Data storage for only calculating array shapes when needed
-        self._z = self._Z = self._x = self._X = self._y = self._Y = None
-        self._extent = None
-        self._delta = None
-
-    def coordinate_transform(self, x, y):
-        return (x, y)
-
-    def crop(self, filter_region=None, coarsen=1):
-        r"""Crop region to *filter_region*
-
-        Create a new Topography object that is identical to this one but cropped
-        to the region specified by filter_region
-
-        :TODO:
-         - Currently this does not work for unstructured data, could in principle
-         - This could be a special case of in_poly although that routine could
-           leave the resulting topography as unstructured effectively.
-        """
-
-        if self.unstructured:
-            raise NotImplemented("*** Cannot currently crop unstructured topo")
-
-        if filter_region is None:
-            # only want to coarsen, so this is entire region:
-            filter_region = [self.x[0],self.x[-1],self.y[0],self.y[-1]]
-
-        # Find indices of region
-        region_index = [None, None, None, None]
-        region_index[0] = (self.x >= filter_region[0]).nonzero()[0][0]
-        region_index[1] = (self.x <= filter_region[1]).nonzero()[0][-1] + 1
-        region_index[2] = (self.y >= filter_region[2]).nonzero()[0][0]
-        region_index[3] = (self.y <= filter_region[3]).nonzero()[0][-1] + 1
-        newtopo = TopographyMod()
-
-        newtopo._x = self._x[region_index[0]:region_index[1]:coarsen]
-        newtopo._y = self._y[region_index[2]:region_index[3]:coarsen]
-
-        # Force regeneration of 2d coordinate arrays and extent if needed
-        newtopo._X = None
-        newtopo._Y = None
-        newtopo._extent = None
-
-        # Modify Z array as well
-        newtopo._Z = self._Z[region_index[2]:region_index[3]:coarsen,
-                          region_index[0]:region_index[1]:coarsen]
-
-        newtopo.unstructured = self.unstructured
-        newtopo.topo_type = self.topo_type
-
-        # print "Cropped to %s by %s array"  % (len(newtopo.x),len(newtopo.y))
-        return newtopo
