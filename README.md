@@ -281,7 +281,7 @@ We provide two Docker images on
 [DockerHub](https://hub.docker.com/r/barbagroup/landspill).
 The first image is the one based on Ubuntu Bionic, which should work on majority
 of the systems. The second one is based on Ubuntu Trusty, which is for the systems
-with old Linux kernels (like kernel 2.6 on many Red Hat clusters).
+with old Linux kernels (like kernel 2.6 on old clusters at many universities).
 
 Pull the Docker image through:
 ```
@@ -315,5 +315,49 @@ To exit the shell of the Docker container, simply execute `exit` in the shell.
 ------------------------------------------------------------------------
 ## 5. Singularity usage
 
+For many HPC clusters or supercomputers, Docker is not available due to
+security concerns, and [Singularity](https://www.sylabs.io/singularity/) is the 
+only container technology available. Similar to the Docker images, we provide 
+two Singularity images on [SingularityHub](https://singularity-hub.org/collections/2381). 
+The first one is based on Ububtu Bionic, and the second is based on Ubuntu Trusty.
+The Trusty version is specifically for the machines with old Linux kernels.
+
+As an example usage, to pull the Bionic image and save to a local image file, do
+```
+$ singularity pull lanspill.sif shub://barbagroup/geoclaw-landspill-cases:bionic
+```
+
+Note, the Singulairty version used is v3.1. If using older Singularity,
+like those with v2.x, the Singularity commands may be different. For example, 
+with Singularity v2.5.2, the command to do the same thing is
+```
+$ singularity pull -n landspill.sif shib://barbagroup/geoclaw-landspill-cases:bionic
+```
+Here we assume the Singularity version is at least v3.1. For those who use older
+Singularity, please consult the Singularity manual for the usage.
+
+An advantage of Singularity is that it will map and bind the current directory
+on the host to a Singularity container automatically. That means, if a user has
+a simulation case on the host, with a Singularity image, he/she can launch the
+simulation directly from the host machine without loging into the container.
+
+For example, suppose we are now on the host machine and has a simulation case
+`utah_gasoline` under the current directory. To run the simulation with the
+Singularity image we just downloaded, do
+```
+$ singularity run --app run landspill.sif utah_gasoline
+```
+
+The `--app run` means Sinuglarity will apply the `run.py` script in the 
+`landspill.sif` image to the case folder `utah_gasoline` on the host.
+
+All utilities in the repository can be called by the same method. To see all
+available commands for `--app <command>`, run
+```
+$ singularity run-help landspill.sif
+```
+
 ------------------------------------------------------------------------
 ## 6. Contact
+
+Pi-Yueh Chuang: pychuang@gwu.edu
