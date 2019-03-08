@@ -181,7 +181,7 @@ if __name__ == "__main__":
             frame_ed += 1
 
     # starting frame no.
-    if args.frame_ed is not None:
+    if args.frame_bg is not None:
         frame_bg = args.frame_bg
     else:
         frame_bg = 0
