@@ -432,10 +432,6 @@ def setgeo(rundata):
     darcy_weisbach_data.default_roughness = 0.0
     darcy_weisbach_data.filename = "roughness.txt"
 
-    # hydrological features
-    hydro_feature_data = landspill.hydro_features
-    hydro_feature_data.files.append("../common-files/hill_hydro.asc")
-
     # Evaporation
     evaporation_data = landspill.evaporation
     evaporation_data.type = 1
