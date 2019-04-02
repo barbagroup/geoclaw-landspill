@@ -142,6 +142,19 @@ if __name__ == "__main__":
     topofilename = os.path.join(casepath, rundata.topo_data.topofiles[0][-1])
     raster = rasterio.open(topofilename)
 
+    # adjust cropping bounds
+    if x_crop_bg < raster.bounds.left:
+        x_crop_bg = raster.bounds.left
+
+    if y_crop_bg < raster.bounds.bottom:
+        y_crop_bg = raster.bounds.bottom
+
+    if x_crop_ed > raster.bounds.right:
+        x_crop_ed = raster.bounds.right
+
+    if y_crop_ed > raster.bounds.top:
+        y_crop_ed = raster.bounds.top
+
     # window/extent object enclosing the cropped region
     window = raster.window(x_crop_bg, y_crop_bg, x_crop_ed, y_crop_ed)
 
@@ -149,7 +162,10 @@ if __name__ == "__main__":
     topodata = raster.read(1, window=window)
 
     # source points; assume only one point source
-    source = rundata.landspill_data.point_sources.point_sources[0][0]
+    try:
+        source = rundata.landspill_data.point_sources.point_sources[0][0]
+    except:
+        source = None
 
     # close the raster file
     raster.close()
@@ -178,13 +194,13 @@ if __name__ == "__main__":
             continue
 
         fig, ax = plot_soln_topo(
-            topodata, extent, outputpath, frameno, args.border, args.level)
+            topodata, extent, outputpath, frameno, [args.cmin, args.cmax],
+            args.border, args.level)
 
         # plot point source
-        line = ax.plot(source[0], source[1], 'r.', markersize=10)
-
-        # label
-        ax.legend(line, ["source"])
+        if source is not None:
+            line = ax.plot(source[0], source[1], 'r.', markersize=10)
+            ax.legend(line, ["source"]) # label
 
         # save image
         fig.savefig(figpath, dpi=90)

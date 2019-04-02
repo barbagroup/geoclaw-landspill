@@ -30,14 +30,13 @@ def plotting_task(inputs):
         return
 
     figH, axH = plot_depth(
-        elev, trans, res, soln_dir, no, opts.border, opts.level, opts.dry_tol,
-        opts.cmin, opts.cmax)
+        elev, trans, res, soln_dir, no, opts.border, opts.level, opts.shaded,
+        opts.dry_tol, opts.cmin, opts.cmax)
 
     # plot point source
-    lineH = axH.plot(point[0], point[1], 'r.', markersize=10)
-
-    # label
-    axH.legend(lineH, ["source"])
+    if point is not None:
+        lineH = axH.plot(point[0], point[1], 'r.', markersize=10)
+        axH.legend(lineH, ["source"]) # label
 
     # save image
     figH.savefig(fig_path, dpi=90)
@@ -84,6 +83,10 @@ if __name__ == "__main__":
     parser.add_argument(
         '--border', dest="border", action="store_true",
         help='also plot the borders of grid patches')
+
+    parser.add_argument(
+        '--shaded', dest="shaded", action="store_true",
+        help='use shaded plots for the background topography (default: False)')
 
     parser.add_argument(
         '--nprocs', dest="nprocs", action="store", type=int,
@@ -182,22 +185,41 @@ if __name__ == "__main__":
 
     # read topo file
     topofilename = os.path.join(casepath, rundata.topo_data.topofiles[0][-1])
-    raster =  rasterio.open(topofilename)
+    raster = rasterio.open(topofilename)
 
-    # window/extent object enclosing the cropped region
-    window = raster.window(x_crop_bg, y_crop_bg, x_crop_ed, y_crop_ed)
+    # adjust cropping bounds
+    if x_crop_bg < raster.bounds.left:
+        x_crop_bg = raster.bounds.left
+
+    if y_crop_bg < raster.bounds.bottom:
+        y_crop_bg = raster.bounds.bottom
+
+    if x_crop_ed > raster.bounds.right:
+        x_crop_ed = raster.bounds.right
+
+    if y_crop_ed > raster.bounds.top:
+        y_crop_ed = raster.bounds.top
 
     # topography raster resolution: (dx, dy)
     res = raster.res
 
+    # window/extent object enclosing the cropped region
+    window = raster.window(x_crop_bg, y_crop_bg, x_crop_ed, y_crop_ed)
+
     # geotransform object of the cropped region
-    trans = rasterio.transform.from_origin(x_crop_bg, y_crop_ed, res[0], res[1])
+    trans = rasterio.transform.from_origin(
+        window.round_offsets().col_off*res[0]+raster.bounds.left,
+        raster.bounds.bottom+(window.round_offsets().row_off+window.round_lengths().height)*res[1],
+        res[0], res[1])
 
     # read the cropped data
     topodata = raster.read(1, window=window)
 
     # source points; assume only one point source
-    source = rundata.landspill_data.point_sources.point_sources[0][0]
+    try:
+        source = rundata.landspill_data.point_sources.point_sources[0][0]
+    except:
+        source = None
 
     # close the raster file
     raster.close()
