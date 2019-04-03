@@ -105,9 +105,8 @@ def download_submodules():
         headers={"Accept": "application/vnd.github.v3+json"})
     response.raise_for_status()
 
-    tar_url = response.json()["head"]["repo"]["archive_url"]
-    tar_url = tar_url.replace("{/ref}", "/{ref}").format(
-        archive_format="tarball", ref=response.json()["head"]["ref"])
+    tar_url = response.json()["archive_url"]
+    tar_url = tar_url.replace("{/ref}", "").format(archive_format="tarball")
 
     response = requests.get(
         tar_url, headers={"Accept": "application/vnd.github.v3+json"})

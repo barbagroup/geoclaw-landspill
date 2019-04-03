@@ -26,14 +26,13 @@ FC ?= gfortran
 FFLAGS ?= -O2 -fopenmp
 
 # source files used for geoclaw-landspill
-include $(GEOLIB)/Makefile.geoclaw
+include $(GEOLIB)/landspill/Makefile.landspill
 
 # package sources excluded
 EXCLUDE_MODULES :=
 EXCLUDE_SOURCES := \
 	stepgrid.f \
-	flag2refine2.f90 \
-	update.f90
+	flag2refine2.f90
 
 # custom source files for this program
 MODULES :=
@@ -42,8 +41,7 @@ SOURCES := \
 	$(CLAW)/riemann/src/rpt2_geoclaw.f \
 	$(CLAW)/riemann/src/geoclaw_riemann_utils.f \
 	$(GEOLIB)/landspill/optimized/stepgrid.f \
-	$(GEOLIB)/landspill/optimized/flag2refine2.f90 \
-	$(GEOLIB)/landspill/optimized/update.f90
+	$(GEOLIB)/landspill/optimized/flag2refine2.f90
 
 # include makefile containing standard definitions and make options:
 include $(CLAWMAKE)

@@ -121,7 +121,7 @@ def plot_at_axes(solution, ax, field=0, border=False,
         return None
 
 def plot_topo(data, transform, res, topo_min=None, topo_max=None,
-              colormap="terrain"):
+              shaded=True, colormap="terrain"):
     """Return a fig and ax object with topography."""
     from matplotlib import colors
     from matplotlib import pyplot
@@ -142,16 +142,22 @@ def plot_topo(data, transform, res, topo_min=None, topo_max=None,
     if topo_max is None:
         topo_max = data.mean() + 2 * data.std()
 
-    # get shaded RGBA data
-    shaded = ls.shade(
-        data, blend_mode="overlay", vert_exag=3, dx=res[0], dy=res[1],
-        vmin=topo_min, vmax=topo_max, cmap=pyplot.get_cmap(colormap))
+    if shaded:
+        # get shaded RGBA data
+        shaded = ls.shade(
+            data, blend_mode="overlay", vert_exag=3, dx=res[0], dy=res[1],
+            vmin=topo_min, vmax=topo_max, cmap=pyplot.get_cmap(colormap))
 
-    # convert from (row, column, band) to (band, row, column)
-    shaded = rasterio.plot.reshape_as_raster(shaded)
+        # convert from (row, column, band) to (band, row, column)
+        shaded = rasterio.plot.reshape_as_raster(shaded)
 
-    # show topography in cropped region
-    rasterio.plot.show(shaded, ax=ax_topo, transform=transform, adjust=None)
+        # show topography in cropped region
+        rasterio.plot.show(shaded, ax=ax_topo, transform=transform, adjust=None)
+    else:
+        rasterio.plot.show(
+            data[-1::-1, :], ax=ax_topo, transform=transform,
+            vmin=topo_min, vmax=topo_max,
+            origin="lower", cmap=pyplot.get_cmap(colormap))
 
     # x, y labels
     ax_topo.set_xlabel("x coordinates (m)")
@@ -176,12 +182,12 @@ def plot_topo(data, transform, res, topo_min=None, topo_max=None,
     return fig, ax_topo
 
 def plot_depth(data, transform, res, solndir, fno, border=False, level=1,
-               dry_tol=1e-5, vmin=None, vmax=None):
+               shaded=True, dry_tol=1e-5, vmin=None, vmax=None):
     """Plot depth on topography."""
     from matplotlib import pyplot
 
     # a new figure and topo ax
-    fig, ax = plot_topo(data, transform, res)
+    fig, ax = plot_topo(data, transform, res, shaded=shaded)
 
     # empty solution object
     soln = pyclaw.Solution()
@@ -221,7 +227,8 @@ def plot_depth(data, transform, res, solndir, fno, border=False, level=1,
 
     return fig, ax
 
-def plot_soln_topo(topodata, extent, solndir, fno, border=False, level=1):
+def plot_soln_topo(topodata, extent, solndir, fno, color_lims=[None, None],
+                   border=False, level=1):
     """Plot the topology from solution (instead of from topo file)"""
     from matplotlib import pyplot
     import rasterio.plot
@@ -239,8 +246,11 @@ def plot_soln_topo(topodata, extent, solndir, fno, border=False, level=1):
         fno, soln.state.t, int(soln.state.t/60.)))
 
     # colormap min & max
-    color_lims = [topodata.mean() - 2 * topodata.std(),
-                  topodata.mean() + 2 * topodata.std()]
+    if color_lims[0] is None:
+        color_lims[0] = topodata.mean() - 2 * topodata.std()
+
+    if color_lims[1] is None:
+        color_lims[1] = topodata.mean() + 2 * topodata.std()
 
     # a new figure
     fig = pyplot.figure(0, (11, 8), 90)

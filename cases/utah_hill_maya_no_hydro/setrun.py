@@ -63,11 +63,11 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_dim = num_dim
 
     # Lower and upper edge of computational domain:
-    clawdata.lower[0] = -12460209.5-400.
-    clawdata.upper[0] = -12460209.5+400.
+    clawdata.lower[0] = -12443619.-100.
+    clawdata.upper[0] = -12443619.+700.
 
-    clawdata.lower[1] = 4985137.4-400
-    clawdata.upper[1] = 4985137.4+400
+    clawdata.lower[1] = 4977641.-650
+    clawdata.upper[1] = 4977641.+150
 
 
 
@@ -170,7 +170,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.dt_initial = 0.3 * dx * dy / vrate
 
     # Max time step to be allowed if variable dt used:
-    clawdata.dt_max = 4.0
+    clawdata.dt_max = 2.5
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
@@ -261,6 +261,7 @@ def setrun(claw_pkg='geoclaw'):
         # Checkpoint every checkpt_interval timesteps (on Level 1)
         # and at the final time.
         clawdata.checkpt_interval = 5
+
 
     return rundata
     # end of function setrun
@@ -388,7 +389,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([3, 1, 5, 0., 1.e10, '../common-files/salt_lake_2.asc'])
+    topo_data.topofiles.append([3, 1, 5, 0., 1.e10, '../common-files/utah_hill.asc'])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
@@ -420,7 +421,8 @@ def setgeo(rundata):
     ptsources_data = landspill.point_sources
     ptsources_data.n_point_sources = 1
     ptsources_data.point_sources.append(
-        [[-12460209.5, 4985137.4], 2, [1800., 12600.], [0.5, 0.1]])
+        [[-12443619., 4977641.], 2, [1800., 12600.], [0.5, 0.1]])
+
 
     # Darcy-Weisbach friction
     darcy_weisbach_data = landspill.darcy_weisbach_friction
@@ -430,13 +432,9 @@ def setgeo(rundata):
     darcy_weisbach_data.default_roughness = 0.0
     darcy_weisbach_data.filename = "roughness.txt"
 
-    # hydrological features
-    hydro_feature_data = landspill.hydro_features
-    hydro_feature_data.files.append("../common-files/hydro2.asc")
-
     # Evaporation
     evaporation_data = landspill.evaporation
-    evaporation_data.type = 0
+    evaporation_data.type = 1
     evaporation_data.coefficients = [1.38, 0.045]
 
     return rundata

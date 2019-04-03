@@ -66,8 +66,8 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.lower[0] = -12443619.-100.
     clawdata.upper[0] = -12443619.+700.
 
-    clawdata.lower[1] = 4977614.-650
-    clawdata.upper[1] = 4977614.+150
+    clawdata.lower[1] = 4977641.-650
+    clawdata.upper[1] = 4977641.+150
 
 
 
@@ -372,6 +372,10 @@ def setgeo(rundata):
     geo_data.friction_forcing = False
     geo_data.manning_coefficient = 0.035
     geo_data.friction_depth = 1.e6
+
+    # extra parameters
+    geo_data.update_tol = geo_data.dry_tolerance
+    geo_data.refine_tol = 0.0
 
     # Refinement data
     refinement_data = rundata.refinement_data
