@@ -155,7 +155,7 @@ def plot_topo(data, transform, res, topo_min=None, topo_max=None,
         rasterio.plot.show(shaded, ax=ax_topo, transform=transform, adjust=None)
     else:
         rasterio.plot.show(
-            data, ax=ax_topo, transform=transform,
+            data[-1::-1, :], ax=ax_topo, transform=transform,
             vmin=topo_min, vmax=topo_max,
             origin="lower", cmap=pyplot.get_cmap(colormap))
 

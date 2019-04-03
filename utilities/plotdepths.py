@@ -209,7 +209,7 @@ if __name__ == "__main__":
     # geotransform object of the cropped region
     trans = rasterio.transform.from_origin(
         window.round_offsets().col_off*res[0]+raster.bounds.left,
-        raster.bounds.bottom+(window.round_offsets().row_off+window.round_lengths().height)*res[1],
+        raster.bounds.top-window.round_offsets().row_off*res[1],
         res[0], res[1])
 
     # read the cropped data
