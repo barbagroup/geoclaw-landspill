@@ -83,6 +83,7 @@ def obtain_NHD_geojson(extent):
 
 def convert_geojson_2_raster(feat_layers, filename, extent, res, crs=3857):
     """Convert a list of GeoTiff dict to raster (ESRI ASCII files)."""
+    import numpy
     import rasterio
     import rasterio.features
     import rasterio.transform
@@ -108,9 +109,14 @@ def convert_geojson_2_raster(feat_layers, filename, extent, res, crs=3857):
                 raise ValueError("Not a valid GeoJson gemoetry data")
             shapes.append((g["geometry"], 10))
 
-    image = rasterio.features.rasterize(
-        shapes=shapes, out_shape=(width, height), fill=-9999.,
-        transform=transform, all_touched=True, dtype=rasterio.float32)
+    # if no geometry exists in the list
+    if not shapes:
+        image = numpy.ones((height, width), dtype=rasterio.float32) * -9999.
+    # else if there's any geometry
+    else:
+        image = rasterio.features.rasterize(
+            shapes=shapes, out_shape=(width, height), fill=-9999.,
+            transform=transform, all_touched=True, dtype=rasterio.float32)
 
     dst.write(image, indexes=1)
 
