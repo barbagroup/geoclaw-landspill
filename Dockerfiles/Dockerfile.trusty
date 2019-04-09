@@ -31,7 +31,7 @@ RUN wget --quiet \
  && conda activate base \
  && conda install -y -q python=3.6 make ca-certificates git \
  && pip install numpy==1.15.4 scipy==1.2.0 netcdf4==1.4.2 six==1.12.0 \
-        matplotlib==3.0.2 requests==2.21.0 rasterio==1.0.18 \
+        matplotlib==3.0.2 requests==2.21.0 rasterio==1.0.22 \
  && conda clean -tipsy
 
 # set up necessary environment variables
