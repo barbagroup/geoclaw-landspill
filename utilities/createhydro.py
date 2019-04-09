@@ -103,13 +103,6 @@ def convert_geojson_2_raster(feat_layers, filename, extent, res, crs=3857):
     height = int((extent[3]-extent[1])/res+0.5)
     transform = rasterio.transform.from_origin(extent[0], extent[3], res, res)
 
-    dst = rasterio.open(
-        os.path.abspath(filename), mode="w", driver="AAIGrid",
-        width=width, height=height, count=1,
-        crs=rasterio.crs.CRS.from_epsg(crs),
-        transform=transform, dtype=rasterio.float32,
-        nodata=-9999.)
-
     shapes = []
     for feat_layer in feat_layers:
         for g in feat_layer["features"]:
@@ -126,12 +119,22 @@ def convert_geojson_2_raster(feat_layers, filename, extent, res, crs=3857):
             shapes=shapes, out_shape=(width, height), fill=-9999.,
             transform=transform, all_touched=True, dtype=rasterio.float32)
 
+    # a workaround to ignore ERROR 4 message
+    rasterio.open(
+        os.path.abspath(filename), mode="w", driver="GTiff",
+        width=1, height=1, count=1, crs=rasterio.crs.CRS.from_epsg(3857),
+        transform=transform, dtype=rasterio.int8, nodata=0
+    ).close()
+
+    dst = rasterio.open(
+        os.path.abspath(filename), mode="w", driver="AAIGrid",
+        width=width, height=height, count=1,
+        crs=rasterio.crs.CRS.from_epsg(crs), transform=transform,
+        dtype=rasterio.float32, nodata=-9999.)
+
     dst.write(image, indexes=1)
 
-    try:
-        dst.close()
-    except:
-        pass
+    dst.close()
 
 def check_download_hydro(casepath, rundata):
     """Check hydro file and download it if it does not exist."""

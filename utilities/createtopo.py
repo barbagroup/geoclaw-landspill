@@ -153,6 +153,13 @@ def geotiff_2_esri_ascii(in_file, out_file):
 
     geotiff = rasterio.open(in_file, "r")
 
+    # a workaround to ignore ERROR 4 message; we create a new Tiff and close it
+    rasterio.open(
+        os.path.abspath(out_file), mode="w", driver="GTiff",
+        width=1, height=1, count=1, crs=rasterio.crs.CRS.from_epsg(3857),
+        transform=geotiff.transform, dtype=rasterio.int8, nodata=0
+    ).close()
+
     dst = rasterio.open(
         os.path.abspath(out_file), mode="w", driver="AAIGrid",
         width=geotiff.width, height=geotiff.height, count=geotiff.count,
@@ -161,12 +168,7 @@ def geotiff_2_esri_ascii(in_file, out_file):
         nodata=geotiff.nodata)
 
     dst.write_band(1, geotiff.read(1))
-
-    # there's a mysterious "ERROR 4" when closing Esri ASCII, try to bypass that
-    try:
-        dst.close()
-    except:
-        pass
+    dst.close()
 
     geotiff.close()
 
