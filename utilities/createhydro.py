@@ -74,10 +74,18 @@ def obtain_NHD_geojson(extent):
     })
 
     geoms = []
+
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(
+        max_retries=requests.packages.urllib3.util.retry.Retry(
+            total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])))
+
     for i, s in enumerate(server):
-        response = requests.get(s, stream=True, params=query[i])
+        response = session.get(s, stream=True, params=query[i])
         response.raise_for_status()
         geoms.append(response.json())
+
+    session.close()
 
     return geoms
 
@@ -168,3 +176,13 @@ def check_download_hydro(casepath, rundata):
         convert_geojson_2_raster(feats, hydro_file, ext, res)
 
         print("Done writing to {}".format(hydro_file), file=sys.stdout)
+
+# if running this script, then it's a test
+if __name__ == "__main__":
+
+    center = [-11483354.366326567, 3727793.1138695683]
+    geoms = obtain_NHD_geojson([
+        center[0]-1000., center[1]-1000., center[0]+1000., center[1]+1000.])
+
+    import pprint
+    pprint.pprint(geoms)

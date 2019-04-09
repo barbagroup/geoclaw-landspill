@@ -112,11 +112,20 @@ def obtain_geotiff(extent, filename, res=1, source="3DEP", token=None):
         dem_query["mosaicRule"] = \
             "{\"mosaicMethod\":\"esriMosaicAttribute\",\"sortField\":\"AcquisitionDate\"}"
 
+    # create a HTTP session that can retry 5 times if 500, 502, 503, 504 happens
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(
+        max_retries=requests.packages.urllib3.util.retry.Retry(
+            total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])))
+
     # use GET to get response
-    dem_response = requests.get(dem_server, stream=True, params=dem_query)
+    dem_response = session.get(dem_server, stream=True, params=dem_query)
 
     # try to raise an error if the server does not return success signal
     dem_response.raise_for_status()
+
+    # close the session
+    session.close()
 
     # if execution comes to this point, we've got the GeoTiff from the server
     tif_url = dem_response.json()["href"]
