@@ -1,10 +1,39 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
+########################################################################################################################
+# Copyright © 2019 The George Washington University and G2 Integrated Solutions, LLC.
+# All Rights Reserved.
 #
-# Copyright © 2018-2019 Pi-Yueh Chuang <pychuang@gwu.edu>
+# Contributors: Pi-Yueh Chuang <pychuang@gwu.edu>
+#               J. Tracy Thorleifson <tracy.thorleifson@g2-is.com>
 #
-# Distributed under terms of the BSD 3-Clause license.
+# Licensed under the BSD-3-Clause License (the "License").
+# You may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: https://opensource.org/licenses/BSD-3-Clause
+#
+# BSD-3-Clause License:
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided
+# that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the
+#    following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+#    following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or
+#    promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+########################################################################################################################
 
 """
 Write to NetCDF4 file with CF convention
@@ -121,11 +150,11 @@ if __name__ == "__main__":
 
     parser.add_argument(
         '--frame-bg', dest="frame_bg", action="store", type=int,
-        help='customized start farme no. (default: 0)')
+        help='customized start frame no. (default: 0)')
 
     parser.add_argument(
         '--frame-ed', dest="frame_ed", action="store", type=int,
-        help='customized end farme no. (default: get from setrun.py)')
+        help='customized end frame no. (default: get from setrun.py)')
 
     # process arguments
     args = parser.parse_args()
@@ -152,6 +181,26 @@ if __name__ == "__main__":
         print("Error: output folder {} does not exist.".format(outputpath),
               file=sys.stderr)
         sys.exit(1)
+
+    """
+    Read the case settings file which stores optional case parameters addressing full
+    NetCDF CF reference date compliance metadata.
+    6/28/2019 - G2 Integrated Solutions - JTT
+    """
+    case_settings_file = os.path.join(casepath, "case_settings.txt")
+    if not os.path.isfile(case_settings_file):
+        print("Error: case folder {} does not have case_settings.txt.".format(casepath),
+              file=sys.stderr)
+        sys.exit(1)
+    case_settings_dict = {}
+    with open(case_settings_file) as f:
+        for line in f:
+            (key, val) = line.split("=")
+            case_settings_dict[key] = val.rstrip()
+
+    apply_datetime_stamp = case_settings_dict.get("APPLY_DATETIME_STAMP")
+    datetime_stamp = case_settings_dict.get("DATETIME_STAMP")
+    calendar_type = case_settings_dict.get("CALENDAR_TYPE")
 
     # load setup.py
     sys.path.insert(0, casepath) # add case folder to module search path
@@ -223,6 +272,10 @@ if __name__ == "__main__":
 
     # create a NC file and root group
     print("Creating NC file: {}".format(ncfilename))
+    print("Apply datetime stamp = {}".format(apply_datetime_stamp))
+    if apply_datetime_stamp == "True":
+        print("Datetime stamp = {}".format(datetime_stamp))
+        print("Calendar type = {}".format(calendar_type))
     rootgrp = netCDF4.Dataset(
         filename=ncfilename, mode="w",
         encoding="utf-8", format="NETCDF4")
@@ -243,7 +296,7 @@ if __name__ == "__main__":
 
     # global attributes
     rootgrp.title = args.case
-    rootgrp.institution = "N/A"
+    rootgrp.institution = "G2 Integrated Solutions, LLC"
     rootgrp.source = "N/A"
     rootgrp.history = "Created " + str(datetime.datetime.now().replace(microsecond=0))
     rootgrp.reference = ""
@@ -251,9 +304,15 @@ if __name__ == "__main__":
     rootgrp.Conventions = "CF-1.7"
 
     # variable: time
-    nc_times.units = "sec"
+    # Modifed to apply datetime stamp reference date, if present in the case_settings.txt file
+    # 6/28/2019 - G2 Integrated Solutions - JTT
+    if not apply_datetime_stamp == "True":  # Datetime stamp is not specified in case_settings.txt
+        nc_times.units = "sec"
+    else:  # Datetime stamp is specified in case_settings.txt
+        nc_times.units = "seconds since " + datetime_stamp
+        nc_times.calendar = calendar_type.lower().replace(" ", "_")
     nc_times.axis = "T"
-    nc_times.long_name = "Simulation times"
+    nc_times.long_name = "Simulation time"
 
     # variable: x
     nc_x.units = "m"
@@ -269,7 +328,7 @@ if __name__ == "__main__":
 
     # variable attributes: depth
     nc_depth.units = "m"
-    nc_depth.long_name = "Oil Depth"
+    nc_depth.long_name = "Plume depth"
     nc_depth.grid_mapping = "mercator"
 
     # variable attributes: mercator
