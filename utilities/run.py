@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
 ########################################################################################################################
-# Copyright © 2019 The George Washington University.
+# Copyright © 2019-2020 Pi-Yueh Chuang and Lorena A. Barba.
 # All Rights Reserved.
 #
 # Contributors: Pi-Yueh Chuang <pychuang@gwu.edu>
