@@ -156,6 +156,10 @@ if __name__ == "__main__":
         '--frame-ed', dest="frame_ed", action="store", type=int,
         help='customized end frame no. (default: get from setrun.py)')
 
+    parser.add_argument(
+        "--ignore-case-settings", dest="ignore_case_settings", action="store_true",
+        help="Ignore the timestamp settings in case_settings.txt")
+
     # process arguments
     args = parser.parse_args()
 
@@ -189,18 +193,24 @@ if __name__ == "__main__":
     """
     case_settings_file = os.path.join(casepath, "case_settings.txt")
     if not os.path.isfile(case_settings_file):
-        print("Error: case folder {} does not have case_settings.txt.".format(casepath),
-              file=sys.stderr)
-        sys.exit(1)
-    case_settings_dict = {}
-    with open(case_settings_file) as f:
-        for line in f:
-            (key, val) = line.split("=")
-            case_settings_dict[key] = val.rstrip()
+        if args.ignore_case_settings:
+            apply_datetime_stamp = "True"
+            datetime_stamp = str(datetime.datetime.now().replace(microsecond=0))
+            calendar_type = "standard"
+        else:
+            print("Error: case folder {} does not have case_settings.txt.".format(casepath),
+                  file=sys.stderr)
+            sys.exit(1)
+    else: # read from case_settings.txt
+        case_settings_dict = {}
+        with open(case_settings_file) as f:
+            for line in f:
+                (key, val) = line.split("=")
+                case_settings_dict[key] = val.rstrip()
 
-    apply_datetime_stamp = case_settings_dict.get("APPLY_DATETIME_STAMP")
-    datetime_stamp = case_settings_dict.get("DATETIME_STAMP")
-    calendar_type = case_settings_dict.get("CALENDAR_TYPE")
+        apply_datetime_stamp = case_settings_dict.get("APPLY_DATETIME_STAMP")
+        datetime_stamp = case_settings_dict.get("DATETIME_STAMP")
+        calendar_type = case_settings_dict.get("CALENDAR_TYPE")
 
     # load setup.py
     sys.path.insert(0, casepath) # add case folder to module search path
