@@ -103,5 +103,5 @@ if __name__ == "__main__":
     # run simulation
     runclaw.runclaw(
         xclawcmd=solver, outdir=os.path.join(case_dir, "_output"),
-        overwrite=False, restart=None, rundir=case_dir, print_git_status=True,
+        overwrite=False, restart=None, rundir=case_dir,
         nohup=False, nice=None)
