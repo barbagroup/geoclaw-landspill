@@ -101,7 +101,7 @@ def download_submodules():
     # download tarball for latest geoclaw-landspill
     print("* Downloading GeoClaw-Landspill", end="")
     response = requests.get(
-        "https://api.github.com/repos/barbagroup/geoclaw/pulls/17",
+        "https://api.github.com/repos/barbagroup/geoclaw",
         headers={"Accept": "application/vnd.github.v3+json"})
     response.raise_for_status()
 
