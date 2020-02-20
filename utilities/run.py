@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
 ########################################################################################################################
-# Copyright © 2019 The George Washington University.
+# Copyright © 2019-2020 Pi-Yueh Chuang and Lorena A. Barba.
 # All Rights Reserved.
 #
 # Contributors: Pi-Yueh Chuang <pychuang@gwu.edu>
@@ -103,5 +103,5 @@ if __name__ == "__main__":
     # run simulation
     runclaw.runclaw(
         xclawcmd=solver, outdir=os.path.join(case_dir, "_output"),
-        overwrite=False, restart=None, rundir=case_dir, print_git_status=True,
+        overwrite=False, restart=None, rundir=case_dir,
         nohup=False, nice=None)
