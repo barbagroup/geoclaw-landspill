@@ -1,9 +1,0 @@
-common-files
-bin
-*.data
-_output*
-_plots*
-*.nc
-*.nc.aux.xml
-*.log
-total_volume.csv
