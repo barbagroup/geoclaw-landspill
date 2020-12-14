@@ -1,0 +1,15 @@
+[submodule "third_party/amrclaw"]
+	path = third_party/amrclaw
+	url = https://github.com/clawpack/amrclaw.git
+[submodule "third_party/pyclaw"]
+	path = third_party/pyclaw
+	url = https://github.com/clawpack/pyclaw.git
+[submodule "third_party/clawutil"]
+	path = third_party/clawutil
+	url = https://github.com/clawpack/clawutil.git
+[submodule "third_party/riemann"]
+	path = third_party/riemann
+	url = https://github.com/clawpack/riemann.git
+[submodule "third_party/geoclaw"]
+	path = third_party/geoclaw
+	url = https://github.com/clawpack/geoclaw.git
