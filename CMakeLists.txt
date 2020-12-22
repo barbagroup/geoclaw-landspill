@@ -11,7 +11,7 @@ project(geoclaw-landspill Fortran)
 include(GNUInstallDirs)
 
 # set the output of make
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_COLOR_MAKEFILE ON)
 
 # add flags based on compiler vendor: GNU
@@ -41,7 +41,7 @@ endif()
 set(AMRLIB "${CMAKE_SOURCE_DIR}/third_party/amrclaw/src/2d")
 set(RIEMANNLIB "${CMAKE_SOURCE_DIR}/third_party/riemann/src")
 set(GEOLIB "${CMAKE_SOURCE_DIR}/third_party/geoclaw/src/2d/shallow")
-set(LANDSPILLLIB "${CMAKE_SOURCE_DIR}/src")
+set(LANDSPILLLIB "${CMAKE_SOURCE_DIR}/geoclaw-landspill/src")
 
 # source files
 set(SOURCE
@@ -210,15 +210,15 @@ set(SOURCE
     )
 
 # executable
-add_executable(landspill ${SOURCE})
+add_executable(geoclaw-landspill-bin ${SOURCE})
 set_target_properties(
-    landspill PROPERTIES 
+    geoclaw-landspill-bin PROPERTIES 
     Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/libs"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
 # installation rules
-install(TARGETS landspill)
+install(TARGETS geoclaw-landspill-bin)
 
 # print info
 message("")
