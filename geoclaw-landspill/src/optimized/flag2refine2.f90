@@ -12,8 +12,6 @@ subroutine flag2refine2(&
     tolsp, q, aux, amrflags)
 
     use amr_module, only: mxnest, t0, DOFLAG, UNSET
-    use topo_module, only: tlowtopo, thitopo, xlowtopo, xhitopo, ylowtopo, yhitopo
-    use topo_module, only: minleveltopo, mtopofiles
     use landspill_module, only: point_sources, refine_tol
     implicit none
 
@@ -23,9 +21,6 @@ subroutine flag2refine2(&
     real(kind=8), intent(in) :: q(meqn, 1-mbc:mx+mbc, 1-mbc:my+mbc)
     real(kind=8), intent(in) :: aux(maux, 1-mbc:mx+mbc, 1-mbc:my+mbc)
     real(kind=8), intent(in out) :: amrflags(1-mbuff:mx+mbuff, 1-mbuff:my+mbuff)
-
-    ! external functions
-    logical, external :: allowflag
 
     ! Generic local variables
     integer :: i, j, m
@@ -47,18 +42,8 @@ subroutine flag2refine2(&
             ! skip because this cell has been flagged to flag or don't flat
             if (amrflags(i,j) .ne. UNSET) cycle x_loop
 
-            ! Check to see if refinement is forced in any topography file region
-            do m = 1, mtopofiles
-                if (level < minleveltopo(m) .and. t >= tlowtopo(m) .and. t <= thitopo(m)) then
-                    if (xc .ge. xlowtopo(m) .and. xc .le. xhitopo(m) .and. yc .ge. ylowtopo(m) .and. yc .le. yhitopo(m)) then
-                        amrflags(i,j) = DOFLAG
-                        cycle x_loop
-                    endif
-                endif
-            enddo
-
             ! flag whenever this is a wet cell
-            if (allowflag(xc, yc, t, level) .and. (q(1, i, j) > refine_tol)) amrflags(i, j) = DOFLAG
+            if (q(1, i, j) > refine_tol) amrflags(i, j) = DOFLAG
 
         enddo x_loop
     enddo y_loop

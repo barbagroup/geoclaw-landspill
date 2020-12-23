@@ -175,7 +175,6 @@ set(SOURCE
     ${GEOLIB}/filval.f90
     ${GEOLIB}/filpatch.f90
     ${GEOLIB}/bc2amr.f90
-    ${GEOLIB}/allowflag.f90 
     ${GEOLIB}/b4step2.f90
     ${GEOLIB}/upbnd.f 
     ${GEOLIB}/setgrd.f
