@@ -38,9 +38,9 @@ if (${OpenMP_Fortran_FOUND})
 endif()
 
 # set the fixed paths
-set(AMRLIB "${CMAKE_SOURCE_DIR}/third_party/amrclaw/src/2d")
-set(RIEMANNLIB "${CMAKE_SOURCE_DIR}/third_party/riemann/src")
-set(GEOLIB "${CMAKE_SOURCE_DIR}/third_party/geoclaw/src/2d/shallow")
+set(AMRLIB "${CMAKE_SOURCE_DIR}/third-party/amrclaw/src/2d")
+set(RIEMANNLIB "${CMAKE_SOURCE_DIR}/third-party/riemann/src")
+set(GEOLIB "${CMAKE_SOURCE_DIR}/third-party/geoclaw/src/2d/shallow")
 set(LANDSPILLLIB "${CMAKE_SOURCE_DIR}/geoclaw-landspill/src")
 
 # source files
