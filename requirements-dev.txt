@@ -1,0 +1,8 @@
+requests
+numpy
+rasterio
+pylint
+flake8
+cmake
+extra-cmake-modules
+scikit-build

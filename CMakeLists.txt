@@ -37,187 +37,25 @@ if (${OpenMP_Fortran_FOUND})
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
 endif()
 
-# set the fixed paths
-set(AMRLIB "${CMAKE_SOURCE_DIR}/third-party/amrclaw/src/2d")
-set(RIEMANNLIB "${CMAKE_SOURCE_DIR}/third-party/riemann/src")
-set(GEOLIB "${CMAKE_SOURCE_DIR}/third-party/geoclaw/src/2d/shallow")
-set(LANDSPILLLIB "${CMAKE_SOURCE_DIR}/geoclaw-landspill/src")
+# find scikit-build's extension if this is built as a Python package
+if(SKBUILD)
+    find_package(PythonExtensions REQUIRED)
+    message(STATUS "Built using scikit-build -- yes")
+    message(STATUS "PYTHON_PREFIX: ${PYTHON_PREFIX}")
+    message(STATUS "PYTHON_SITE_PACKAGES_DIR: ${PYTHON_SITE_PACKAGES_DIR}")
+    message(STATUS "PYTHON_RELATIVE_SITE_PACKAGES_DIR: ${PYTHON_RELATIVE_SITE_PACKAGES_DIR}")
+    message(STATUS "PYTHON_SEPARATOR: ${PYTHON_SEPARATOR}")
+    message(STATUS "PYTHON_PATH_SEPARATOR: ${PYTHON_PATH_SEPARATOR}")
+    message(STATUS "PYTHON_EXTENSION_MODULE_SUFFIX: ${PYTHON_EXTENSION_MODULE_SUFFIX}")
+else()
+    message(STATUS "Built using scikit-build - no")
+endif()
 
-# source files
-set(SOURCE
-    ${AMRLIB}/amr_module.f90
-    ${AMRLIB}/regions_module.f90
-    ${AMRLIB}/adjoint_module.f90
-    ${GEOLIB}/utility_module.f90
-    ${GEOLIB}/geoclaw_module.f90
-    ${GEOLIB}/topo_module.f90
-    ${GEOLIB}/qinit_module.f90
-    ${GEOLIB}/refinement_module.f90
-    ${GEOLIB}/fixedgrids_module.f90
-    ${GEOLIB}/fgmax_module.f90
-    ${GEOLIB}/surge/model_storm_module.f90
-    ${GEOLIB}/surge/data_storm_module.f90
-    ${GEOLIB}/surge/storm_module.f90
-    ${GEOLIB}/gauges_module.f90
-    ${GEOLIB}/multilayer/multilayer_module.f90
-    ${GEOLIB}/friction_module.f90
-    ${GEOLIB}/adjointsup_module.f90
-    ${LANDSPILLLIB}/point_source/point_source_module.f90
-    ${LANDSPILLLIB}/point_source/point_source_collection_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_abstract_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_constant_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_block_constants_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_cells_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_three_regimes_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_churchill_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_two_regimes_module.f90
-    ${LANDSPILLLIB}/darcy_weisbach/darcy_weisbach_module.f90
-    ${LANDSPILLLIB}/hydrologic/spm_module.f90
-    ${LANDSPILLLIB}/hydrologic/hydro_feature_module.f90
-    ${LANDSPILLLIB}/hydrologic/hydro_feature_collection_module.f90
-    ${LANDSPILLLIB}/evaporation/evap_base_module.f90
-    ${LANDSPILLLIB}/evaporation/fingas1996_module.f90
-    ${LANDSPILLLIB}/evaporation/evap_module.f90
-    ${LANDSPILLLIB}/landspill_module.f90
-    ${AMRLIB}/prefilp.f90
-    ${AMRLIB}/trimbd.f90
-    ${AMRLIB}/bound.f90
-    ${AMRLIB}/intfil.f90
-    ${AMRLIB}/flagregions2.f90 
-    ${AMRLIB}/quick_sort1.f
-    ${AMRLIB}/quick_sort_reals.f
-    ${AMRLIB}/estdt.f
-    ${AMRLIB}/check4nans.f90
-    ${AMRLIB}/init_iflags.f
-    ${AMRLIB}/igetsp.f
-    ${AMRLIB}/reclam.f
-    ${AMRLIB}/birect.f
-    ${AMRLIB}/cleanup.f
-    ${AMRLIB}/colate2.f
-    ${AMRLIB}/bufnst2.f
-    ${AMRLIB}/flagger.f
-    ${AMRLIB}/fixcapaq.f
-    ${AMRLIB}/flglvl2.f
-    ${AMRLIB}/fluxad.f
-    ${AMRLIB}/fluxsv.f
-    ${AMRLIB}/grdfit2.f
-    ${AMRLIB}/moment.f90
-    ${AMRLIB}/nestck2.f
-    ${AMRLIB}/prepc.f
-    ${AMRLIB}/prepf.f
-    ${AMRLIB}/projec2.f
-    ${AMRLIB}/signs.f
-    ${AMRLIB}/findcut.f
-    ${AMRLIB}/smartbis.f
-    ${AMRLIB}/putnod.f
-    ${AMRLIB}/putsp.f
-    ${AMRLIB}/regrid.f
-    ${AMRLIB}/setuse.f
-    ${AMRLIB}/stst1.f
-    ${AMRLIB}/nodget.f
-    ${AMRLIB}/basic.f
-    ${AMRLIB}/outval.f
-    ${AMRLIB}/copysol.f
-    ${AMRLIB}/outvar.f
-    ${AMRLIB}/outmsh.f
-    ${AMRLIB}/outtre.f
-    ${AMRLIB}/domain.f 
-    ${AMRLIB}/cellave.f
-    ${AMRLIB}/fdisc.f
-    ${AMRLIB}/fss.f
-    ${AMRLIB}/zeroin.f
-    ${AMRLIB}/setflags.f
-    ${AMRLIB}/shiftset2.f
-    ${AMRLIB}/conck.f
-    ${AMRLIB}/domshrink.f
-    ${AMRLIB}/domprep.f
-    ${AMRLIB}/domup.f
-    ${AMRLIB}/domcopy.f
-    ${AMRLIB}/setdomflags.f
-    ${AMRLIB}/setIndices.f
-    ${AMRLIB}/coarseGridFlagSet.f
-    ${AMRLIB}/addflags.f
-    ${AMRLIB}/baseCheck.f
-    ${AMRLIB}/drivesort.f
-    ${AMRLIB}/flagcheck.f
-    ${AMRLIB}/domgrid.f
-    ${AMRLIB}/setPhysBndryFlags.f
-    ${AMRLIB}/griddomup.f
-    ${AMRLIB}/griddomcopy.f
-    ${AMRLIB}/griddomshrink.f
-    ${AMRLIB}/intcopy.f
-    ${AMRLIB}/preintcopy.f
-    ${AMRLIB}/icall.f
-    ${AMRLIB}/preicall.f
-    ${AMRLIB}/inlinelimiter.f
-    ${AMRLIB}/cstore.f
-    ${AMRLIB}/saveqc.f
-    ${AMRLIB}/opendatafile.f
-    ${AMRLIB}/init_bndryList.f
-    ${AMRLIB}/resize_bndryList.f
-    ${AMRLIB}/init_nodes.f90
-    ${AMRLIB}/restrt_nodes.f90
-    ${AMRLIB}/resize_nodes.f90
-    ${AMRLIB}/init_alloc.f90
-    ${AMRLIB}/restrt_alloc.f90
-    ${AMRLIB}/resize_alloc.f90
-    ${GEOLIB}/setprob.f90
-    ${GEOLIB}/qinit.f90
-    ${GEOLIB}/topo_update.f90
-    ${GEOLIB}/cellgridintegrate2.f
-    ${GEOLIB}/topointegral.f
-    ${GEOLIB}/bilinearintegral.f
-    ${GEOLIB}/src1d.f90
-    ${GEOLIB}/step2.f90
-    ${GEOLIB}/flux2fw.f
-    ${GEOLIB}/qad.f
-    ${GEOLIB}/valout.f90
-    ${GEOLIB}/filval.f90
-    ${GEOLIB}/filpatch.f90
-    ${GEOLIB}/bc2amr.f90
-    ${GEOLIB}/b4step2.f90
-    ${GEOLIB}/upbnd.f 
-    ${GEOLIB}/setgrd.f
-    ${GEOLIB}/gfixup.f
-    ${GEOLIB}/ginit.f
-    ${GEOLIB}/getmaxspeed.f90
-    ${GEOLIB}/advanc.f
-    ${GEOLIB}/fgmax_read.f90
-    ${GEOLIB}/fgmax_frompatch.f90
-    ${GEOLIB}/fgmax_interp.f90
-    ${GEOLIB}/fgmax_values.f90
-    ${GEOLIB}/fgmax_finalize.f90
-    ${GEOLIB}/check.f
-    ${GEOLIB}/restrt.f
-    ${GEOLIB}/errest.f
-    ${GEOLIB}/errf1.f
-    ${GEOLIB}/coarsen.f
-    ${GEOLIB}/auxcoarsen.f
-    ${GEOLIB}/prepbigstep.f
-    ${GEOLIB}/prepregstep.f
-    ${GEOLIB}/set_eta_init.f90
-    ${RIEMANNLIB}/rpn2_geoclaw.f
-    ${RIEMANNLIB}/rpt2_geoclaw.f
-    ${RIEMANNLIB}/geoclaw_riemann_utils.f
-    ${LANDSPILLLIB}/amr2.f90
-    ${LANDSPILLLIB}/update.f90 
-    ${LANDSPILLLIB}/setaux.f90
-    ${LANDSPILLLIB}/src2.f90
-    ${LANDSPILLLIB}/tick.f
-    ${LANDSPILLLIB}/optimized/stepgrid.f
-    ${LANDSPILLLIB}/optimized/flag2refine2.f90 
-    )
+# third-party
+add_subdirectory(third-party)
 
-# executable
-add_executable(geoclaw-landspill-bin ${SOURCE})
-set_target_properties(
-    geoclaw-landspill-bin PROPERTIES 
-    Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/libs"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
-# installation rules
-install(TARGETS geoclaw-landspill-bin)
+# main program
+add_subdirectory(geoclaw-landspill)
 
 # print info
 message("")
