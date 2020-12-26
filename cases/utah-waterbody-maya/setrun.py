@@ -254,7 +254,7 @@ def setgeo(rundata: data.ClawRunData):
 
     # for topography, append lines of the form [topotype, fname]
     topo_data = rundata.topo_data
-    topo_data.topofiles.append([3, '../common-files/salt_lake_2.asc'])
+    topo_data.topofiles.append([3, '../common-files/utah-waterbody.asc'])
 
     # for moving topography, append lines of the form: [topotype, fname]
     # dtopo_data = rundata.dtopo_data
@@ -270,10 +270,10 @@ def setgeo(rundata: data.ClawRunData):
     # Land-spill module settings
     rundata.add_data(LandSpillData(), 'landspill_data')
     landspill = rundata.landspill_data
-    landspill.ref_mu = 0.6512 # cP @ 15 degree C
+    landspill.ref_mu = 332.  # cP @ 15 degree C
     landspill.ref_temperature = 15.
     landspill.ambient_temperature = 25.
-    landspill.density = 800. # kg / m^3 @ 15 degree C; will overwrite rho in GeoClaw
+    landspill.density = 9.266e2  # kg / m^3 @ 15 degree C; will overwrite rho in GeoClaw
 
     # extra parameters
     landspill.update_tol = geo_data.dry_tolerance
@@ -295,11 +295,11 @@ def setgeo(rundata: data.ClawRunData):
 
     # hydrological features
     hydro_feature_data = landspill.hydro_features
-    hydro_feature_data.files.append("../common-files/hydro2.asc")
+    hydro_feature_data.files.append("../common-files/utah-waterbody-hydro.asc")
 
     # Evaporation
     evaporation_data = landspill.evaporation
     evaporation_data.type = 1
-    evaporation_data.coefficients = [13.2, 0.21]
+    evaporation_data.coefficients = [1.38, 0.045]
 
     return rundata

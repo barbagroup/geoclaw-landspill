@@ -254,7 +254,7 @@ def setgeo(rundata: data.ClawRunData):
 
     # for topography, append lines of the form [topotype, fname]
     topo_data = rundata.topo_data
-    topo_data.topofiles.append([3, '../common-files/utah_hill.asc'])
+    topo_data.topofiles.append([3, '../common-files/utah-hill.asc'])
 
     # for moving topography, append lines of the form: [topotype, fname]
     # dtopo_data = rundata.dtopo_data
@@ -292,6 +292,10 @@ def setgeo(rundata: data.ClawRunData):
     darcy_weisbach_data.friction_tol = 1e6
     darcy_weisbach_data.default_roughness = 0.0
     darcy_weisbach_data.filename = "roughness.txt"
+
+    # hydrological features
+    hydro_feature_data = landspill.hydro_features
+    hydro_feature_data.files.append("../common-files/utah-hill-hydro.asc")
 
     # Evaporation
     evaporation_data = landspill.evaporation

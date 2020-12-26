@@ -41,10 +41,10 @@ def setrun(claw_pkg: str = 'geoclaw'):
     clawdata.num_dim = num_dim
 
     # lower and upper edge of computational domain:
-    clawdata.lower[0] = -12459650.-400.
-    clawdata.upper[0] = -12459650.+400.
-    clawdata.lower[1] = 4986000.-400
-    clawdata.upper[1] = 4986000.+400
+    clawdata.lower[0] = -12443619.-100.
+    clawdata.upper[0] = -12443619.+700.
+    clawdata.lower[1] = 4977641.-650
+    clawdata.upper[1] = 4977641.+150
 
     # number of grid cells: coarsest grid
     clawdata.num_cells[0] = 200
@@ -112,7 +112,7 @@ def setrun(claw_pkg: str = 'geoclaw'):
     clawdata.dt_initial = 0.3 * cell_area / vrate
 
     # max time step allowed if variable dt
-    clawdata.dt_max = 4.0
+    clawdata.dt_max = 2.5
 
     # desired CFL if variable dt, and max CFL allowed without retaking a step with a smaller dt
     clawdata.cfl_desired = 0.9
@@ -254,7 +254,7 @@ def setgeo(rundata: data.ClawRunData):
 
     # for topography, append lines of the form [topotype, fname]
     topo_data = rundata.topo_data
-    topo_data.topofiles.append([3, '../common-files/salt_lake_1.asc'])
+    topo_data.topofiles.append([3, '../common-files/utah-hill.asc'])
 
     # for moving topography, append lines of the form: [topotype, fname]
     # dtopo_data = rundata.dtopo_data
@@ -270,10 +270,10 @@ def setgeo(rundata: data.ClawRunData):
     # Land-spill module settings
     rundata.add_data(LandSpillData(), 'landspill_data')
     landspill = rundata.landspill_data
-    landspill.ref_mu = 332. # cP @ 15 degree C
+    landspill.ref_mu = 332.  # cP @ 15 degree C
     landspill.ref_temperature = 15.
     landspill.ambient_temperature = 25.
-    landspill.density = 9.266e2 # kg / m^3 @ 15 degree C; will overwrite rho in GeoClaw
+    landspill.density = 9.266e2  # kg / m^3 @ 15 degree C; will overwrite rho in GeoClaw
 
     # extra parameters
     landspill.update_tol = geo_data.dry_tolerance
@@ -283,7 +283,7 @@ def setgeo(rundata: data.ClawRunData):
     ptsources_data = landspill.point_sources
     ptsources_data.n_point_sources = 1
     ptsources_data.point_sources.append(
-        [[-12459650., 4986000.], 2, [1800., 12600.], [0.5, 0.1]])
+        [[-12443619., 4977641.], 2, [1800., 12600.], [0.5, 0.1]])
 
     # Darcy-Weisbach friction
     darcy_weisbach_data = landspill.darcy_weisbach_friction
@@ -293,13 +293,9 @@ def setgeo(rundata: data.ClawRunData):
     darcy_weisbach_data.default_roughness = 0.0
     darcy_weisbach_data.filename = "roughness.txt"
 
-    # hydrological features
-    hydro_feature_data = landspill.hydro_features
-    hydro_feature_data.files.append("../common-files/hydro1.asc")
-
     # Evaporation
     evaporation_data = landspill.evaporation
-    evaporation_data.type = 0
+    evaporation_data.type = 1
     evaporation_data.coefficients = [1.38, 0.045]
 
     return rundata
