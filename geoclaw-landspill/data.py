@@ -228,6 +228,12 @@ class DarcyWeisbachData(gclandspill.clawutil.data.ClawData):
         # check data consistency
         self._check()
 
+        # process the absolute path to the filename (even though it's not used in type 1 & 2)
+        # Relative path will be relative to the folder containing `out_file` (following how geoclaw
+        # handles topo files)
+        if not os.path.isabs(self.filename):
+            self.filename = os.path.abspath(os.path.join(os.path.dirname(out_file), self.filename))
+
         # open the output file
         self.open_data_file(out_file, data_source)
 
@@ -264,13 +270,11 @@ class DarcyWeisbachData(gclandspill.clawutil.data.ClawData):
             self.data_write('coefficients',
                             description="coefficients in blocks")
         elif self.type == 3:
-            self.filename = os.path.abspath(self.filename)
             self.data_write('filename',
                             description="Escri ASCII file for coefficients")
             self.data_write('default_coefficient',
                             description="coefficient for cells not covered by the file")
         elif self.type in [4, 5, 6]:
-            self.filename = os.path.abspath(self.filename)
             self.data_write('filename',
                             description="Escri ASCII file for roughness")
             self.data_write('default_roughness',
@@ -361,7 +365,10 @@ class HydroFeatureData(gclandspill.clawutil.data.ClawData):
 
         # write file names line by line
         for i, single_file in enumerate(self.files):
-            single_file = os.path.abspath(single_file)
+            # relative path will be relative to the folder containing `out_file` (following how
+            # geoclaw handles topo files)
+            if not os.path.isabs(single_file):
+                single_file = os.path.abspath(os.path.join(os.path.dirname(out_file), single_file))
             self.data_write('file {0}'.format(i), single_file)
 
         # close the output file
