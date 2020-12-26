@@ -1,5 +1,7 @@
+python>=3.8
 requests
 numpy
+netcdf4
 rasterio
 pylint
 flake8
