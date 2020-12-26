@@ -28,6 +28,11 @@ class AMRLevelError(Exception):
     pass  # pylint: disable=unnecessary-pass
 
 
+class NoWetCellError(Exception):
+    """An error to raise when there's not we cell."""
+    pass  # pylint: disable=unnecessary-pass
+
+
 class DatetimeCtrlParams(TypedDict):
     """A type definition for the `dict` controlling the timestamps."""
     apply_datetime_stamp = bool
@@ -281,10 +286,15 @@ def interpolate(
         child_rasters.append(memfiles[-1].open(**child_raster_props))
         child_rasters[-1].write(state.q[0].T[::-1, :], 1)
 
-    # make a mosaic raster and interpolate to output domain
-    dst, affine = rasterio.merge.merge(
-        datasets=child_rasters, bounds=extent, res=res, nodata=nodata, precision=15,
-        resampling=rasterio.enums.Resampling.cubic_spline)
+    try:
+        # make a mosaic raster and interpolate to output domain
+        dst, affine = rasterio.merge.merge(
+            datasets=child_rasters, bounds=extent, res=res, nodata=nodata, precision=15,
+            resampling=rasterio.enums.Resampling.cubic_spline)
+    except IndexError as err:
+        if str(err) == "list index out of range":  # not wer cells
+            raise NoWetCellError("All grid patches have only dry cells.") from err
+        raise  # other unknown errors
 
     # filter out dry cells
     dst = numpy.where(dst < dry_tol, nodata, dst)
@@ -472,8 +482,11 @@ def write_soln_to_nc(
         # write the time
         root["time"][band] = soln.state.t
 
-        # write the depth values
-        root["depth"][band, :, :] = interpolate(soln, level, dry_tol, extent, res, nodata)[0]
+        try:
+            # write the depth values
+            root["depth"][band, :, :] = interpolate(soln, level, dry_tol, extent, res, nodata)[0]
+        except NoWetCellError:
+            root["depth"][band, :, :] = nodata
 
     print()
     root.close()
