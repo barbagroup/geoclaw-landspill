@@ -22,8 +22,8 @@ import numpy
 import rasterio
 import rasterio.features
 import rasterio.transform
-from gclandspill._misc import import_setrun
-from gclandspill.clawutil.data import ClawRunData
+from gclandspill import _misc
+from gclandspill import clawutil
 
 
 def create_data(case_dir: os.PathLike, out_dir: os.PathLike = "_output", overwrite: bool = False):
@@ -48,7 +48,7 @@ def create_data(case_dir: os.PathLike, out_dir: os.PathLike = "_output", overwri
         raise FileNotFoundError("{} does not exist or is not a folder".format(case_dir))
 
     # import setrun.py
-    setrun = import_setrun(case_dir)
+    setrun = _misc.import_setrun(case_dir)
     rundata = setrun.setrun()  # get ClawRunData object
 
     # geoclaw' `TopographyData` assumes topography filenames are relative to the output folder,
@@ -85,7 +85,7 @@ def create_data(case_dir: os.PathLike, out_dir: os.PathLike = "_output", overwri
     check_download_hydro(case_dir, rundata)
 
 
-def check_download_topo(case_dir: os.PathLike, rundata: ClawRunData):
+def check_download_topo(case_dir: os.PathLike, rundata: clawutil.data.ClawRunData):
     """Check topo file and download it if it does not exist.
 
     Arguments
@@ -169,7 +169,7 @@ def check_download_topo_single(
     os.remove(topo_file.with_suffix(".tif"))
 
 
-def check_download_hydro(case_dir: os.PathLike, rundata: ClawRunData):
+def check_download_hydro(case_dir: os.PathLike, rundata: clawutil.data.ClawRunData):
     """Check hydro file and download it if it does not exist.
 
     Arguments

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
 #
-# Copyright © 2021 Pi-Yueh Chuang and Lorena A. Barba
+# Copyright © 2020-2021 Pi-Yueh Chuang and Lorena A. Barba
 #
 # Distributed under terms of the BSD 3-Clause license.
 

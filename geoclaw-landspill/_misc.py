@@ -12,6 +12,29 @@ import os
 import sys
 import pathlib
 import importlib.util
+import typing
+
+
+class AMRLevelError(Exception):
+    """An error to raise when the target AMR level does not exist."""
+    pass  # pylint: disable=unnecessary-pass
+
+
+class NoWetCellError(Exception):
+    """An error to raise when there's not we cell."""
+    pass  # pylint: disable=unnecessary-pass
+
+
+class WrongTopoFileError(Exception):
+    """An error to raise when users give an unexpected topography format."""
+    pass  # pylint: disable=unnecessary-pass
+
+
+class DatetimeCtrlParams(typing.TypedDict):
+    """A type definition for the `dict` controlling the timestamps."""
+    apply_datetime_stamp = bool
+    datetime_stamp = str
+    calendar_type = str
 
 
 def import_setrun(case_dir: os.PathLike):
