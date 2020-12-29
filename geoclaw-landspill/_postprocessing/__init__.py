@@ -9,4 +9,4 @@
 """gclandspill._postprocessing."""
 from . import calc
 from . import netcdf
-from . import plot
+from . import plotdepth

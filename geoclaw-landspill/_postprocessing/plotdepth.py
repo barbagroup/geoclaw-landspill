@@ -75,7 +75,7 @@ def plot_depth(args: argparse.Namespace):
 
     # process args.dest_dir
     args.dest_dir = _misc.process_path(
-        args.dest_dir, args.case, "_plots/level{:02d}".format(args.level))
+        args.dest_dir, args.case, "_plots/depth/level{:02d}".format(args.level))
     os.makedirs(args.dest_dir, exist_ok=True)  # make sure the folder exists
 
     # process args.extent
