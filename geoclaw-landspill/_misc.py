@@ -30,6 +30,11 @@ class WrongTopoFileError(Exception):
     pass  # pylint: disable=unnecessary-pass
 
 
+class NoFrameDataError(Exception):
+    """An error to raise when no data found for this time frame."""
+    pass  # pylint: disable=unnecessary-pass
+
+
 class DatetimeCtrlParams(typing.TypedDict):
     """A type definition for the `dict` controlling the timestamps."""
     apply_datetime_stamp = bool

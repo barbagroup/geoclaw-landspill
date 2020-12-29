@@ -9,7 +9,7 @@
 """Post-processing functions calculating something with simulation solutions."""
 import os
 import pathlib
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Sequence
 
 import rasterio
 from gclandspill import pyclaw
@@ -164,6 +164,131 @@ def get_soln_max(soln_dir: os.PathLike, frame_bg: int, frame_ed: int, level: int
             vmax = max(vmax, state.q[0].max())
 
     return vmax
+
+
+def get_topo_min(soln_dir: os.PathLike, frame_bg: int, frame_ed: int, level: int):
+    """Get the minimum elevation during runtime among the time frames at a specific AMR level.
+
+    Arguments
+    ---------
+    soln_dir : pathlike
+        Path to where the solution files are.
+    frame_bg, frame_ed : int
+        Begining and end frame numbers.
+    level : int
+        The level of AMR to provess.
+
+    Returns
+    -------
+    vmin : float
+    """
+
+    soln_dir = pathlib.Path(soln_dir).expanduser().resolve()
+    vmin = float("inf")
+
+    for fno in range(frame_bg, frame_ed):
+
+        # aux and solution file of this time frame
+        aux = soln_dir.joinpath("fort.a"+"{}".format(fno).zfill(4)).is_file()
+
+        if not aux:  # this time frame does not contain runtime topo data
+            continue
+
+        soln = pyclaw.Solution()
+        soln.read(fno, str(soln_dir), file_format="binary", read_aux=True)
+
+        # search through AMR grid patches in this solution
+        for state in soln.states:
+            if state.patch.level != level:
+                continue
+
+            vmin = min(vmin, state.aux[0].min())
+
+    if vmin == float("inf"):
+        raise _misc.NoFrameDataError("No AUX found in frames {} to {}.".format(frame_bg, frame_ed))
+
+    return vmin
+
+
+def get_topo_max(soln_dir: os.PathLike, frame_bg: int, frame_ed: int, level: int):
+    """Get the maximum elevation during runtime among the time frames at a specific AMR level.
+
+    Arguments
+    ---------
+    soln_dir : pathlike
+        Path to where the solution files are.
+    frame_bg, frame_ed : int
+        Begining and end frame numbers.
+    level : int
+        The level of AMR to provess.
+
+    Returns
+    -------
+    vmax : float
+    """
+
+    soln_dir = pathlib.Path(soln_dir).expanduser().resolve()
+    vmax = - float("inf")
+
+    for fno in range(frame_bg, frame_ed):
+
+        # aux and solution file of this time frame
+        aux = soln_dir.joinpath("fort.a"+"{}".format(fno).zfill(4)).is_file()
+
+        if not aux:  # this time frame does not contain runtime topo data
+            continue
+
+        soln = pyclaw.Solution()
+        soln.read(fno, str(soln_dir), file_format="binary", read_aux=True)
+
+        # search through AMR grid patches in this solution
+        for state in soln.states:
+            if state.patch.level != level:
+                continue
+
+            vmax = max(vmax, state.aux[0].max())
+
+    if vmax == - float("inf"):
+        raise _misc.NoFrameDataError("No AUX found in frames {} to {}.".format(frame_bg, frame_ed))
+
+    return vmax
+
+
+def get_topo_lims(topo_files: Sequence[Tuple[int, os.PathLike]], **kwargs):
+    """Get the min and max elevation from a set of topography files.
+
+    Arguments
+    ---------
+    topo_files : tuple/lsit of sub-tuples/lists of [int, pathlike]
+        A list of list following the topography files specification in GeoClaw's settings.
+    **kwargs :
+        Available keyword arguments are:
+        extent : [float, float, float, float]
+            The customize extent. The format is [west, south, east, north].
+
+    Returns
+    -------
+    [min, max]
+    """
+
+    # process optional keyword arguments
+    extent = None if "extent" not in kwargs else kwargs["extent"]
+
+    # use mosaic raster to obtain interpolated terrain
+    rasters = []
+    for topo in topo_files:
+        if topo[0] != 3:
+            raise _misc.WrongTopoFileError("Only accept type 3 topography file: {}".format(topo[0]))
+        rasters.append(rasterio.open(topo[-1], "r"))
+
+    # merge and interplate
+    dst, _ = rasterio.merge.merge(rasters, extent)
+
+    # close raster datasets
+    for topo in rasters:
+        topo.close()
+
+    return dst[0].min(), dst[0].max()
 
 
 def interpolate(

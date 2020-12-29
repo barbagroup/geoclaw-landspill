@@ -10,3 +10,4 @@
 from . import calc
 from . import netcdf
 from . import plotdepth
+from . import plottopo

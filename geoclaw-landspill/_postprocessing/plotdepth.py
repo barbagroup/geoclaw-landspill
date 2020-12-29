@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the BSD 3-Clause license.
 
-"""Functions related to plotting with matplotlib."""
+"""Functions related to plotting depth with matplotlib."""
 import os
 import copy
 import pathlib

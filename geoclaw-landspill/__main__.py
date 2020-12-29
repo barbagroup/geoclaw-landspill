@@ -15,10 +15,12 @@ import gclandspill
 from gclandspill._preprocessing import create_data
 from gclandspill._postprocessing.netcdf import convert_to_netcdf
 from gclandspill._postprocessing.plotdepth import plot_depth
+from gclandspill._postprocessing.plottopo import plot_topo
 
 
 def main():
     """Main function of geoclaw-landspill."""
+    # pylint: disable=too-many-statements
 
     # main CMD parser
     parser = argparse.ArgumentParser(
@@ -177,7 +179,59 @@ def main():
     parser_plotdepth.add_argument(
         '--border', dest="border", action="store_true",
         help='Also plot the borders of grid patches')
-    parser_plotdepth.set_defaults(func=plot_depth)  # callback for the `createnc` command
+    parser_plotdepth.set_defaults(func=plot_depth)  # callback for the `plotdepth` command
+
+    # `plottopo` command
+    # ----------------------------------------------------------------------------------------------
+    parser_plottopo = subparsers.add_parser(
+        name="plottopo", help="Plot runtime topography and output to a PNG figure per time frame.",
+        description="This plots the topography data on AMR grids during simulation runtime."
+    )
+    parser_plottopo.add_argument(
+        "case", action="store", type=pathlib.Path, metavar="CASE",
+        help="The path to the target case directory."
+    )
+    parser_plottopo.add_argument(
+        '--nprocs', dest="nprocs", action="store", type=int,
+        help='Number of processers to use. (default: all usable logical CPU cores)')
+    parser_plottopo.add_argument(
+        '--level', dest="level", action="store", type=int,
+        help='Plot up to this level (default: finest level)')
+    parser_plottopo.add_argument(
+        '--frame-bg', dest="frame_bg", action="store", type=int, default=0, metavar="FRAMEBG",
+        help='Customize beginning frame No. (default: 0)')
+    parser_plottopo.add_argument(
+        '--frame-ed', dest="frame_ed", action="store", type=int, metavar="FRAMEED",
+        help='Customize end frame No. (default: get from setrun.py)')
+    parser_plottopo.add_argument(
+        '--soln-dir', dest="soln_dir", action="store", type=pathlib.Path, default="_output",
+        metavar="SOLNDIR", help="""
+            Customize the folder holding solution files. A relative path will be assumed to be
+            relative to CASE. (default: _output)
+        """)
+    parser_plottopo.add_argument(
+        '--dest-dir', dest="dest_dir", action="store", type=pathlib.Path, metavar="DESTDIR",
+        help="""
+            Customize the folder to save figures. A relative path will be assumed to be relative to
+            CASE. (default: <CASE>/_plots/topo))
+        """)
+    parser_plottopo.add_argument(
+        '--extent', dest="extent", action="store", nargs=4, type=float, default=None,
+        metavar=("XMIN", "YMIN", "XMAX", "YMAX"),
+        help='Customize the output extent (default: determine from solutions)')
+    parser_plottopo.add_argument(
+        '--cmax', dest="cmax", action="store", type=float,
+        help='Maximum value of runtime elevation (default: determined from aux files)')
+    parser_plottopo.add_argument(
+        '--cmin', dest="cmin", action="store", type=float,
+        help='Minimum value of runtime elevation (default: determined from aux files)')
+    parser_plottopo.add_argument(
+        '--cmap', dest="cmap", action="store", type=str, default="viridis",
+        help='Colormap name for depth plosts (default: viridis)')
+    parser_plottopo.add_argument(
+        '--border', dest="border", action="store_true",
+        help='Also plot the borders of grid patches')
+    parser_plottopo.set_defaults(func=plot_topo)  # callback for the `plottopo` command
 
     # parse the cmd
     # ----------------------------------------------------------------------------------------------
