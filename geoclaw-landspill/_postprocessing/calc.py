@@ -374,3 +374,38 @@ def interpolate(
         memfile.close()
 
     return dst[0], affine
+
+
+def get_total_volume(soln_dir: os.PathLike, frame_bg: int, frame_ed: int, n_levels: int):
+    """Get total volumes at AMR levels.
+
+    Arguments
+    ---------
+    soln_dir : pathlike
+        Path to where the solution files are.
+    frame_bg, frame_ed : int
+        Begining and end frame numbers.
+    n_levels : int
+        Total number of AMR levels.
+
+    Returns
+    -------
+    A list of of shape (n_frames, n_levels).
+    """
+
+    soln_dir = pathlib.Path(soln_dir).expanduser().resolve()
+
+    ans = [[0. for _ in range(n_levels)] for _ in range(frame_bg, frame_ed)]
+
+    for ifno, fno in enumerate(range(frame_bg, frame_ed)):
+
+        # solution file of this time frame
+        soln = pyclaw.Solution()
+        soln.read(fno, str(soln_dir), file_format="binary", read_aux=False)
+
+        # search through AMR grid patches, if found desired dx & dy at the level, quit
+        for state in soln.states:
+            p = state.patch  # pylint: disable=invalid-name
+            ans[ifno][p.level-1] += (state.q[0].sum() * p.delta[0] * p.delta[1])
+
+    return ans

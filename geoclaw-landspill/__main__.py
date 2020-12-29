@@ -16,6 +16,7 @@ from gclandspill._preprocessing import create_data
 from gclandspill._postprocessing.netcdf import convert_to_netcdf
 from gclandspill._postprocessing.plotdepth import plot_depth
 from gclandspill._postprocessing.plottopo import plot_topo
+from gclandspill._postprocessing.volumes import create_volume_csv
 
 
 def main():
@@ -232,6 +233,43 @@ def main():
         '--border', dest="border", action="store_true",
         help='Also plot the borders of grid patches')
     parser_plottopo.set_defaults(func=plot_topo)  # callback for the `plottopo` command
+
+    # `volumes` command
+    # ----------------------------------------------------------------------------------------------
+    parser_volumes = subparsers.add_parser(
+        name="volumes", help="Calculate the total volumes at each AMR level.",
+        description="Calculate and return a CSV file for total volumes at all AMR levels."
+    )
+    parser_volumes.add_argument(
+        "case", action="store", type=pathlib.Path, metavar="CASE",
+        help="The path to the target case directory."
+    )
+    parser_volumes.add_argument(
+        '--frame-bg', dest="frame_bg", action="store", type=int, default=0, metavar="FRAMEBG",
+        help='Customize beginning frame No. (default: 0)')
+    parser_volumes.add_argument(
+        '--frame-ed', dest="frame_ed", action="store", type=int, metavar="FRAMEED",
+        help='Customize end frame No. (default: get from setrun.py)')
+    parser_volumes.add_argument(
+        '--soln-dir', dest="soln_dir", action="store", type=pathlib.Path, default="_output",
+        metavar="SOLNDIR", help="""
+            Customize the folder holding solution files. A relative path will be assumed to be
+            relative to CASE. (default: _output)
+        """)
+    parser_volumes.add_argument(
+        '--dest-dir', dest="dest_dir", action="store", type=pathlib.Path, metavar="DESTDIR",
+        help="""
+            Customize the folder to save output file. A relative path will be assumed to be
+            relative to <CASE>. Ignored if <FILENAME> is an absolute path. (default: same as
+            <SOLNDIR>)')
+        """)
+    parser_volumes.add_argument(
+        '--filename', dest="filename", action="store", type=pathlib.Path,
+        help="""
+            Customize the output CSV file name. A relative path will be assumed to be
+            relative to <DESTDIR>. (default: volumes.csv)
+        """)
+    parser_volumes.set_defaults(func=create_volume_csv)  # callback for the `volumes` command
 
     # parse the cmd
     # ----------------------------------------------------------------------------------------------
