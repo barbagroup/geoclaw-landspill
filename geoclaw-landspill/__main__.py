@@ -305,7 +305,7 @@ def run(args: argparse.Namespace):
     create_data(args.case, args.output)
 
     # get the Fortran solver binary
-    solver = pathlib.Path(gclandspill.__file__).parents[1].joinpath("bin", "geoclaw-landspill-bin")
+    solver = pathlib.Path(gclandspill.__file__).parent.joinpath("bin", "geoclaw-landspill-bin")
 
     if not solver.is_file():
         raise FileNotFoundError("Couldn't find solver at {}".format(solver))

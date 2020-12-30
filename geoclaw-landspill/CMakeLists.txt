@@ -34,7 +34,7 @@ target_link_libraries(geoclaw-landspill-bin geoclaw-landspill-third-party)
 target_include_directories(geoclaw-landspill-bin PRIVATE $<TARGET_PROPERTY:geoclaw-landspill-third-party,BINARY_DIR>)
 
 # installation rules for the fortran executable
-install(TARGETS geoclaw-landspill-bin)
+install(TARGETS geoclaw-landspill-bin DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/bin")
 
 # installation rules for python lib
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill")
