@@ -8,4 +8,4 @@ requests
 numpy
 netcdf4
 rasterio
-matplotlib
+matplotlib-base
