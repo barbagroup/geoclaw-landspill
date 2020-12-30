@@ -1,11 +1,6 @@
-python>=3.8
-gfortran_linux-64>=8.2.0
-make
-cmake
-extra-cmake-modules
-scikit-build
-requests
-numpy
-netcdf4
-rasterio
-matplotlib-base
+six>=1.15.0
+requests>=2.25.1
+numpy>=1.19.4
+rasterio>=1.1.8
+netCDF4>=1.5.5.1
+matplotlib>=3.3.3
