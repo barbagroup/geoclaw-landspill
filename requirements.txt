@@ -1,5 +1,6 @@
 python>=3.8
 gfortran_linux-64>=8.2.0
+make
 cmake
 extra-cmake-modules
 scikit-build
