@@ -2,7 +2,7 @@
 
 # the base image is ubuntu 18.04 
 Bootstrap: docker
-From: barbagroup/landspill:trusty
+From: barbagroup/landspill:v0.1.trusty
 
 # environment variablae DURING RUNTIME
 %environment

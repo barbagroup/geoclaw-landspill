@@ -25,17 +25,18 @@ RUN pip3 install -I numpy==1.15.4 scipy==1.2.0 netcdf4==1.4.2 six==1.12.0 \
 ENV PYTHON=python3 \
     FC=gfortran-8 \
     MPLBACKEND=agg \
-    PATH=/opt/geoclaw-landspill-cases/utilities:$PATH
+    PATH=/opt/geoclaw-landspill/utilities:$PATH
 
 # clone geoclaw-landspill-cases
 RUN cd /opt \
- && git clone https://github.com/barbagroup/geoclaw-landspill-cases.git \
- && cd geoclaw-landspill-cases \
+ && git clone https://github.com/barbagroup/geoclaw-landspill.git \
+ && cd geoclaw-landspill \
+ && git checkout v0.1 \
  && $PYTHON setup.py
 
 # add a new non-root user and copy example case folders
 RUN useradd -ms /bin/bash landspill \
- && cp -r /opt/geoclaw-landspill-cases/cases /home/landspill/landspill-examples \
+ && cp -r /opt/geoclaw-landspill/cases /home/landspill/landspill-examples \
  && chown landspill:landspill -R /home/landspill/landspill-examples
 
 # change user to landspill
