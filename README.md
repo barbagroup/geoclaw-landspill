@@ -1,349 +1,235 @@
-geoclaw-landspill-cases
-==========================
+geoclaw-landspill
+=================
 
-This repository contains a collection of land-spill simulation cases and 
-utilities. It helps the reproducibility of our research, and in the meanwhile,
-provides utility tools to ease the workflow of overland flow simulation with
-GeoClaw. In addition, the Docker image provided by this repository can help
-Windows user run simulations with GeoClaw, which does not officially support
-Windows. And the Singularity image makes running GeoClaw on HPC clusters easier.
-Most supercomputers and HPC clusters do not support Docker, and Singularity is
-the only option.
+***Note: if looking for content of `geoclaw-landspill-cases`, please checkout tag
+`v0.1`. This repository has been converted to a fully working solver package.***
 
-The solver used for overland flow simulations is a modified version of 
-[GeoClaw](http://www.clawpack.org/geoclaw.html). Currently, this modified 
-version has not yet been merged back into the upstream. And the source code of 
-the modified version can be found [here](https://github.com/barbagroup/geoclaw).
+*geoclaw-landspill* is a package for running oil overland flow simulations for
+the applications in pipeline risk management. It includes a numerical solver and
+some pre-/post-processing utilities.
+
+The numerical solver is a modified version of
+[GeoClaw](http://www.clawpack.org/geoclaw.html).
+GeoClaw solves full shallow-water equations. We added several new features and
+utilities to it and make it usable to simulate the overland flow from pipeline
+ruptures. These features include:
+
+* adding point sources to mimic the rupture points
+* adding evaporation models
+* adding Darcy-Weisbach bottom friction models with land roughness
+* adding temperature-dependent viscosity
+* recording detail locations and time of oil flowing into in-land waterbodies
+* removing unnecessary code to improve AMR performance
+* downloading topography and hydrology data automatically (US only)
+* generating CF-1.7 compliant NetCDF files
 
 ## Content
-1. [Setting up](#1-setting-up)
-    1. [Prerequisites](#1-1-prerequisites)
-    2. [Steps](#1-2-steps)
-2. [Running a case](#2-running-a-case)
-3. [Other utilities](#3-other-utilities)
-4. [Docker usage](#4-docker-usage)
-5. [Singularity usage](#5-singularity-usage)
-6. [Contact](#6-contact)
+1. [Installation](#1-installation)
+2. [Usage](#2-usage)
+3. [Docker usage](#3-docker-usage)
+4. [Singularity usage](#4-singularity-usage)
+5. [Contact](#5-contact)
 
 ------------------------------------------------------------------------
-## 1. Setting up
+## 1. Installation
 
-The recommended way to run cases or use utilities in this repository is 
-through [Docker](#4-docker-usage) images or [Singularity](#5-singularity-usage) 
+The recommended way to use *geoclaw-landspill* is through
+[Docker](#4-docker-usage) images or [Singularity](#5-singularity-usage) 
 images. But in case both Docker and Singularity are not available, follow the 
-instruction in this section to set up the environment in Linux.
+instruction in this section to build and install *geoclaw-landspill*.
 
 ### 1-1. Prerequisites
 
-1. Python >= 3.6
-2. gfortran >= 8
-3. [numpy](http://www.numpy.org/) >= 1.15.4
-4. [requests](http://docs.python-requests.org/en/master/) >= 2.21.0
-5. [rasterio](https://github.com/mapbox/rasterio) >= 1.0.18
-6. [scipy](https://www.scipy.org/) >= 1.2.0: (optional) required by `createnc.py`.
-7. [matplotlib](https://matplotlib.org/) >= 3.0.2: (optiona) required by `plotdepths.py` and `plottopos.py`.
-8. [netCDF4](http://unidata.github.io/netcdf4-python/) >= 1.4.2: (optional) required by `createnc.py`.
+The operating system used for development and runtime is Linux, though all
+dependencies are handled by [conda](https://www.anaconda.com/). It may also work
+under MacOS and Windows. But we have no interest in testing and maintaining the
+compatibility to non-Linux OS.
 
-The easiest way to get `gfortran` >= 8 is through the package manager in Linux.
-For Arch Linux, do
+See [requirements.txt](requirements.txt) for conda packages required to build
+and install *geocland-landspill*.
+
+To create a conda environment that can be used for *geoclaw-landspill*:
 
 ```
-# pacman -S gcc-fortran
+$ conda create -n landspill -c defaults -c conda-forge --file requirements
 ```
 
-For Ubuntu Bionic, use:
+Then go into the conda environment through
 
 ```
-# apt-get install gfortran-8
+$ conda activate landspill
 ```
 
-Regarding the Python dependencies, for users using 
-[Anaconda](https://www.anaconda.com/), use the following commands to install 
-the Python prerequisites:
+Now we are ready to build and install *geoclaw-landspill*.
+
+### 1-2. Installation
+
+Currently, *geoclaw-landspill* is not yet released on PyPI or conda-forge, users
+have to install it manually.
+
+First, pull the repository:
 
 ```
-$ conda install numpy=1.15.4
-$ conda install requests=2.21.0
-$ conda install rasterio=1.0.18
-$ conda install scipy=1.2.0
-$ conda install matplotlib=3.0.2
-$ conda install netcdf4=1.4.2
+$ git clone --recurse-submodules https://github.com/barbagroup/geoclaw-landspill.git
 ```
 
-Or with `pip` (for Python 3):
+Then
 
 ```
-$ pip install -I \
-    numpy==1.15.4 \
-    requests==2.21.0 \
-    rasterio==1.0.18 \
-    scipy==1.2.0 \
-    matplotlib==3.0.2 \
-    netcdf4==1.4.2
+$ cd geoclaw-landspill
+$ python setup.py install -G "Unix Makefiles" -j <number of CPUs to use>
 ```
-
-### 1-2. Steps
-
-1. Clone this repositroy or download the tarbal of the latest release.
-2. Make sure all prerequisites are available.
-3. Go to the repository folder.
-3. Run `$ python setup.py`.
-
-------------------------------------------------------------------------
-## 2. Running a case
-
-Currently, there are nine cases, all under the subfolder `cases`:
-
-1. utah_gasoline
-2. utah_gasoline_no_evaporation
-3. utah_hill_maya
-4. utah_hydrofeatures_gasoline
-5. utah_hydrofeatures_gasoline_no_evaporation
-6. utah_hydrofeatures_maya
-7. utah_hydrofeatures_maya_no_evaporation
-8. utah_maya
-9. utah_maya_no_evaporation
-
-Users can use the Python script `run.py` under the folder `utilities` to run 
-these cases. The usage of this script is
+Or, if installing *geoclaw-landspill* to users' local Python path is preferred:
 
 ```
-$ python run.py <path to the case>
+$ python setup.py install --user -G "Unix Makefiles" -j <number of CPUs to use>
 ```
 
-For example, if a user is currently under the repository folder 
-`geoclaw-landspill-cases`, and he/she wants to run the example case `utah_maya`
-in the folder `cases`, then do
+`<number of CPUs to use>` refers to the number of processes for parallel
+compilization of the Fortran code. If installing to local Python path, by default, it is
+installed to `${HOME}/.local`. In this case, it is necessary to add
+`${HOME}/.local/bin` to the environment variable `PATH`.
+
+To uninstall *geoclaw-landspill*, do
 
 ```
-$ python utilities/run.py cases/utah_maya
-```
-
-The script `run.py` is executable, so the user can execute it directly:
-
-```
-$ utilities/run.py cases/utah_maya
-```
-
-The script `run.py` can automatically download topography data and hydrologic
-data from the USGS database. So after running a case with `run.py`, users should find
-the topography and hydrologic data files at the path specified in the case setup.
-For example, in the `utah_maya` case, the `utah_maya/setrun.py` specifies that
-the topography file is `cases/common-files/salt_lake_1.asc`. But `run.py` can
-not find `cases/common-files/salt_lake_1.asc`, so it will try to download the 
-topography data from the USGS database according to the extent set in the 
-`utah_maya/setrun.py`, and it will save the data to `cases/common-files/salt_lake_1.asc`.
-The hydrologic data follows the same rule. If in the future a user creates 
-his/her own simulation case without providing topography/hydrology data, 
-the `run.py` will do the same. Currently, the `run.py` can only automatically 
-download data for the regions inside the US.
-
-To control how many CPU cores are used for a simulation, set the environment
-variable `OMP_NUM_THREADS`. For example, to use only 4 cores for the `utah_maya`
-case, do
-```
-$ export OMP_NUM_THREADS=4
-$ python utilities/run.py cases/utah_maya
-```
-
-Or simply
-```
-$ OMP_NUM_THREADS=4 python utilities/run.py cases/utah_maya
-```
-
-After the simulation, the result files will be in `<case folder>/_output`.
-
-------------------------------------------------------------------------
-## 3. Other utilities
-
-The repository provides some other utilities for post-processing.
-
-### 3-1. NetCDF raster files with CF convention
-
-The Python script `createnc.py` can be used to create a NetCDF file with 
-temporal depth data for a case. Usage:
-```
-$ python createnc.py [-h] [--level LEVEL] [--frame-bg FRAME_BG]
-                     [--frame-ed FRAME_ED]
-                     case
-```
-
-Arguments and Options:
-```
-positional arguments:
-  case                 the name of the case
-
-optional arguments:
-  -h, --help           show this help message and exit
-  --level LEVEL        use data from a specific AMR level (default: finest level)
-  --frame-bg FRAME_BG  customized start frame no. (default: 0)
-  --frame-ed FRAME_ED  customized end frame no. (default: get from setrun.py)
-```
-
-The resulting NetCDF file will be `<case folder>/<case name>_level<XX>.nc`.
-For example, if creating a NetCDF file from `utah_hill_maya` and without
-sepcifying a specific AMR level, then the NetCDF file will be
-`utah_hill_maya/utah_hill_maya_level02.nc`.
-
-### 3-2. Visualization of depth
-
-Use the python script `plotdepths.py` to visualize depth results at each
-output time. Usage:
-```
-$ python plotdepths.py [-h] [--level LEVEL] [--dry-tol DRY_TOL] [--cmax CMAX]
-                       [--cmin CMIN] [--frame-bg FRAME_BG] [--frame-ed FRAME_ED]
-                       [--continue] [--border] [--nprocs NPROCS]
-                       case
-```
-
-
-Arguments and Options:
-```
-positional arguments:
-  case                 the name of the case
-
-optional arguments:
-  -h, --help           show this help message and exit
-  --level LEVEL        plot depth result at a specific AMR level (default: finest level)
-  --dry-tol DRY_TOL    tolerance for dry state (default: obtained from setrun.py)
-  --cmax CMAX          maximum value in the depth colorbar (default: obtained from solution)
-  --cmin CMIN          minimum value in the depth colorbar (default: obtained from solution)
-  --frame-bg FRAME_BG  customized start frame no. (default: 0)
-  --frame-ed FRAME_ED  customized end frame no. (default: obtained from setrun.py)
-  --continue           continue creating figures in existing _plot folder
-  --border             also plot the borders of grid patches
-  --nprocs NPROCS      number of CPU threads used for plotting (default: 1)
-```
-
-The plots will be in under `<case folder>/_plots/depth/level<xx>`. For example,
-if plotting the results of `utah_hill_maya` and without specifying a
-specific AMR level, then the plots will be in `utah_hill_maya/_plots/depth/level02`.
-
-### 3-3. Visualization of elevation data used by AMR grids
-
-To see how elevation data is evaluated on AMR grids, use the script `plottopos.py`:
-
-```
-$ python plottopos.py [-h] [--level LEVEL] [--cmax CMAX] [--cmin CMIN]
-                      [--frame-bg FRAME_BG] [--frame-ed FRAME_ED] [--continue]
-                      [--border]
-                      case
-```
-
-And the arguments:
-
-```
-positional arguments:
-  case                 the name of the case
-
-optional arguments:
-  -h, --help           show this help message and exit
-  --level LEVEL        plot depth result at a specific AMR level (default: finest level)
-  --cmax CMAX          maximum value in the depth colorbar (default: obtained from solution)
-  --cmin CMIN          minimum value in the depth colorbar (default: obtained from solution)
-  --frame-bg FRAME_BG  customized start farme no. (default: 0)
-  --frame-ed FRAME_ED  customized end farme no. (default: obtained from setrun.py)
-  --continue           continue creating figures in existing _plot folder
-  --border             also plot the borders of grid patches
-```
-
-The topography plots generated from this script are different from the topography
-file (the DEM file). The elevation values in these plots are the values in the 
-AMR solution files. The purpose of these plots is to examine the correctness
-of the elevation data used in simulations.
-
-### 3-4. Total volume on the ground
-
-The script `calculatevolume.py` can be used to calculate the total fluid volume
-on the ground at different time frame and different AMR level. It creates a CSV
-file called `total_volume.csv` under the case folder.
-
-```
-$ python calculatevolume.py [-h] [--frame-bg FRAME_BG] [--frame-ed FRAME_ED] case
-```
-
-Arguments:
-
-```
-positional arguments:
-  case                 the name of the case
-
-optional arguments:
-  -h, --help           show this help message and exit
-  --frame-bg FRAME_BG  customized start frame no. (default: 0)
-  --frame-ed FRAME_ED  customized end frame no. (default: get from setrun.py)
+$ pip uninstall geoclaw-landspill
 ```
 
 ------------------------------------------------------------------------
-## 4. Docker usage
+## 2. Usage
+
+To see the help:
+
+```
+$ geoclaw-landspill --help
+```
+
+### 2-1. Running a case
+
+To run a case, execute
+
+```
+$ geoclaw-landspill run <path to a case folder>
+```
+
+Example cases can be found in directory `cases`. Currently, there are ten cases.
+A case folder must have at least a `setrun.py` that configures the simulation.
+This follows the convention of GeoClaw and Clawpack-related projects.
+
+The command `run` automatically downloads (only in the US) topography and
+hydrology data from the USGS database if specified data files can not be found.
+For example, after running the `utah-flat-maya` case under `cases`, users should
+find topography and hydrology files, `utah-flat.asc` and `utah-flat-hydro.asc`,
+under the folder `common-files`.
+
+The solver runs with OpenMP-parallelization. By default, the number of threads
+involved in a run is system-dependent. Users can explicitly control how many
+threads to use for a simulation by environment variable `OMP_NUM_THREADS`. See
+OpenMP's documentation. For example, to run the `utah-flat-maya` with 4 threads:
+
+```
+$ OMP_NUM_THREADS=4 geoclaw-landspill run <path to utah-flat-maya>
+```
+
+Raw simulation results are under folder `<case folder>/_output`. If running a
+case multiple times, old `_output` folders are renamed automatically to
+`_output.<timestamp>`, so old results are not lost.
+
+Use following commands to generate GIS-software-readable raster files or to
+produce quick visualizations.
+
+### 2-2. NetCDF raster files with CF convention
+
+```
+$ geoclaw-landspill createnc <path to a case>
+```
+
+This command converts raw simulation results to a CF-compliant temporal NetCDF
+raster file. At least QGIS and ArcGIS are able to read this file format. The
+resulting NetCDF file will be at `<case folder>/_output/<case name>-level<XX>.nc`.
+Only the results at one AMR level are used. The default level is the finest AMR
+level. Use flag `--level=<number>` to create raster files for other AMR levels.
+
+To see more parameters to control the conversion, use
+
+```
+$ geoclaw-landspill createnc --help
+```
+
+
+### 2-3. Visualization of depth
+
+```
+$ geoclaw-landspill plotdepth <path to a case>
+```
+
+This create flow depth contours for all time frames. Figures are saved to
+`<case folder>/_plots/depth/level<xx>`. By default, only the results on the
+finest AMR grid level are plotted.
+
+See `--help` for more arguments.
+
+### 2-4. Visualization of elevation data used by AMR grids
+
+```
+$ geoclaw-landspill plottopo <path to a case>
+```
+
+`plottopo` plots the runtime topography on AMR grids at each time frame of a 
+simulation. This is different from plotting the topography using topography
+file. Runtime topography means the actual elevation values defined on AMR grid
+cells during a simulation.
+
+The output figures are saved to `<case folder>/_plots/topo`.
+
+See `--help` for more arguments.
+
+### 2-5. Total volume on the ground
+
+```
+$ geoclaw-landspill volumes <path to a case>
+```
+
+This command calculates total fluid volumes at each AMR grid level at each time
+frame. The results are saved to a CSV file `<case folder>/_output/volumes.csv`.
+The main use case of this volume data is to check the mass conservation.
+
+------------------------------------------------------------------------
+## 3. Docker usage
 
 We provide two Docker images on 
 [DockerHub](https://hub.docker.com/r/barbagroup/landspill).
-The first image is the one based on Ubuntu Bionic, which should work on the majority
-of the systems. The second one is based on Ubuntu Trusty, which is for the systems
-with old Linux kernels (like kernel 2.6 on old clusters at many universities).
+Currently, end users have to use the image with tag `dev` because we haven't had
+any format release.
 
 Pull the Docker image through:
+
 ```
-$ docker pull barbagroup/landspill:bionic
-```
-or
-```
-$ docker pull barbagroup/landspill:trusty
+$ docker pull barbagroup/landspill:dev
 ```
 
 To get into the shell of a Docker container:
 ```
-$ docker run -it --name landspill barbagroup/landspill:bionic
+$ docker run -it --name landspill barbagroup/landspill:dev
 ```
 After getting into the shell, the example cases are under `landspill-examples`.
-All executable utility Python scripts are in the `PATH` environment variable.
-
-For example, to run the simulation of the case `utah_maya` with 4 CPU cores, and 
-suppose the current directory is the home directory, do
-```
-$ OMP_NUM_THREADS=4 run.py landspill-examples/utah_maya 
-```
-
-Or to generate depth plots of `utah_maya` after simulation, for example, do:
-```
-$ plotdepths.py landspill-examples/utah_maya
-```
-
-To exit the shell of the Docker container, simply execute `exit` in the shell.
+All *geoclaw-landspill* commands are available.
 
 ------------------------------------------------------------------------
-## 5. Singularity usage
+## 4. Singularity usage
 
 For many HPC clusters or supercomputers, Docker is not available due to
 security concerns, and [Singularity](https://www.sylabs.io/singularity/) is the 
-only container technology available. Similar to the Docker images, we provide 
-two Singularity images on [SingularityHub](https://singularity-hub.org/collections/2381). 
-The first one is based on Ubuntu Bionic, and the second is based on Ubuntu Trusty.
-The Trusty version is specifically for the machines with old Linux kernels.
+only container technology available. 
 
-As an example usage, to pull the Bionic image and save to a local image file, do
+To pull the `dev` image and save to a local image file, do
 ```
-$ singularity pull lanspill.sif shub://barbagroup/geoclaw-landspill-cases:bionic
+$ singularity pull lanspill.sif library://barbagroup/geoclaw-landspill:dev
 ```
 
-Note, the Singularity version used is v3.1. If using older Singularity,
-like those with v2.x, the Singularity commands may be different. For example, 
-with Singularity v2.5.2, the command to do the same thing is
-```
-$ singularity pull -n landspill.sif shib://barbagroup/geoclaw-landspill-cases:bionic
-```
-Here we assume the Singularity version is at least v3.1. For those who use older
-Singularity, please consult the Singularity manual for the usage.
+The minimum Singularity version tested is v3.4.
 
-An advantage of Singularity is that it will map and bind the current directory
-on the host to a Singularity container automatically. That means, if a user has
-a simulation case on the host, with a Singularity image, he/she can launch the
-simulation directly from the host machine without logging into the container.
-
-For example, suppose we are now on the host machine and has a simulation case
-`utah_gasoline` under the current directory. To run the simulation with the
-Singularity image we just downloaded, do
 ```
 $ singularity run --app run landspill.sif utah_gasoline
 ```
@@ -358,6 +244,6 @@ $ singularity run-help landspill.sif
 ```
 
 ------------------------------------------------------------------------
-## 6. Contact
+## 5. Contact
 
 Pi-Yueh Chuang: pychuang@gwu.edu
