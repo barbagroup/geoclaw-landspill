@@ -16,7 +16,13 @@ set(CMAKE_COLOR_MAKEFILE ON)
 
 # add flags based on compiler vendor: GNU
 if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -std=legacy")
+
+    if (CMAKE_GENERATOR MATCHES "Unix Makefiles")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
+    endif()
+
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=legacy")
+
     set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} -fbounds-check")
 endif()
 
