@@ -16,13 +16,11 @@ set(CMAKE_COLOR_MAKEFILE ON)
 
 # add flags based on compiler vendor: GNU
 if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-
     if (CMAKE_GENERATOR MATCHES "Unix Makefiles")
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
     endif()
 
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=legacy")
-
     set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} -fbounds-check")
 endif()
 
@@ -45,17 +43,14 @@ endif()
 
 # find scikit-build's extension if this is built as a Python package
 if(SKBUILD)
-    find_package(PythonExtensions REQUIRED)
     message(STATUS "Built using scikit-build -- yes")
-    message(STATUS "PYTHON_PREFIX: ${PYTHON_PREFIX}")
-    message(STATUS "PYTHON_SITE_PACKAGES_DIR: ${PYTHON_SITE_PACKAGES_DIR}")
-    message(STATUS "PYTHON_RELATIVE_SITE_PACKAGES_DIR: ${PYTHON_RELATIVE_SITE_PACKAGES_DIR}")
-    message(STATUS "PYTHON_SEPARATOR: ${PYTHON_SEPARATOR}")
-    message(STATUS "PYTHON_PATH_SEPARATOR: ${PYTHON_PATH_SEPARATOR}")
-    message(STATUS "PYTHON_EXTENSION_MODULE_SUFFIX: ${PYTHON_EXTENSION_MODULE_SUFFIX}")
+    find_package(PythonExtensions REQUIRED)  # scikit-build tries to set variables to this package?
+    set(DEST "geoclaw-landspill")
 else()
-    message(STATUS "Built using scikit-build - no")
+    message(STATUS "Built using scikit-build -- no")
+    set(DEST "${CMAKE_INSTALL_LIBDIR}/gclandspill")
 endif()
+message(STATUS "Python packages/modules will install to ${DEST}")
 
 # third-party
 add_subdirectory(third-party)

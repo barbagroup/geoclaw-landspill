@@ -34,12 +34,22 @@ target_link_libraries(geoclaw-landspill-bin geoclaw-landspill-third-party)
 target_include_directories(geoclaw-landspill-bin PRIVATE $<TARGET_PROPERTY:geoclaw-landspill-third-party,BINARY_DIR>)
 
 # installation rules for the fortran executable
-install(TARGETS geoclaw-landspill-bin DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/bin")
+install(TARGETS geoclaw-landspill-bin DESTINATION "${DEST}/bin")
 
 # installation rules for python lib
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill")
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill")
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/_preprocessing.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill")
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/_postprocessing" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill")
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/_misc.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill")
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py" DESTINATION "${DEST}")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py" DESTINATION "${DEST}")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/_preprocessing.py" DESTINATION "${DEST}")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/_postprocessing" DESTINATION "${DEST}")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/_misc.py" DESTINATION "${DEST}")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data.py" DESTINATION "${DEST}")
+
+# create an executable python script for non-setup.py installation
+if (NOT SKBUILD)
+    install(
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py"
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        RENAME "geoclaw-landspill"
+    )
+endif()

@@ -1,19 +1,23 @@
 # amrclaw
-set(AMRCLAW_FORTRAN "${CMAKE_CURRENT_SOURCE_DIR}/amrclaw/src/2d")
-set(AMRCLAW_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/amrclaw/src/python/amrclaw")
+set(AMRCLAW "${CMAKE_CURRENT_SOURCE_DIR}/amrclaw")
+set(AMRCLAW_FORTRAN "${AMRCLAW}/src/2d")
+set(AMRCLAW_PYTHON "${AMRCLAW}/src/python/amrclaw")
 
 # riemann
 set(RIEMANN_FORTRAN "${CMAKE_CURRENT_SOURCE_DIR}/riemann/src")
 
 # geoclaw
-set(GEOCLAW_FORTRAN "${CMAKE_CURRENT_SOURCE_DIR}/geoclaw/src/2d/shallow")
-set(GEOCLAW_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/geoclaw/src/python/geoclaw")
+set(GEOCLAW "${CMAKE_CURRENT_SOURCE_DIR}/geoclaw")
+set(GEOCLAW_FORTRAN "${GEOCLAW}/src/2d/shallow")
+set(GEOCLAW_PYTHON "${GEOCLAW}/src/python/geoclaw")
 
 # pyclaw
-set(PYCLAW_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/pyclaw/src/pyclaw")
+set(PYCLAW "${CMAKE_CURRENT_SOURCE_DIR}/pyclaw")
+set(PYCLAW_PYTHON "${PYCLAW}/src/pyclaw")
 
 # clawutil
-set(CLAWUTIL_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/clawutil/src/python/clawutil")
+set(CLAWUTIL "${CMAKE_CURRENT_SOURCE_DIR}/clawutil")
+set(CLAWUTIL_PYTHON "${CLAWUTIL}/src/python/clawutil")
 
 # lump all fortran dependencies into one single library
 add_library(geoclaw-landspill-third-party STATIC
@@ -157,21 +161,25 @@ add_library(geoclaw-landspill-third-party STATIC
 )
 
 # install amrclaw's Python module
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/amrclaw_init.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/amrclaw" RENAME "__init__.py")
-install(FILES "${AMRCLAW_PYTHON}/data.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/amrclaw")
+install(FILES "${AMRCLAW}/LICENSE" DESTINATION "${DEST}/amrclaw")
+install(FILES "${AMRCLAW_PYTHON}/data.py" DESTINATION "${DEST}/amrclaw")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/amrclaw_init.py" DESTINATION "${DEST}/amrclaw" RENAME "__init__.py")
 
 # install geoclaw's Python module
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/geoclaw_init.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/geoclaw" RENAME "__init__.py")
-install(FILES "${GEOCLAW_PYTHON}/data.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/geoclaw")
+install(FILES "${GEOCLAW}/LICENSE" DESTINATION "${DEST}/geoclaw")
+install(FILES "${GEOCLAW_PYTHON}/data.py" DESTINATION "${DEST}/geoclaw")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/geoclaw_init.py" DESTINATION "${DEST}/geoclaw" RENAME "__init__.py")
 
 # install pyclaw's Python module
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/pyclaw_init.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/pyclaw" RENAME "__init__.py")
-install(FILES "${PYCLAW_PYTHON}/util.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/pyclaw")
-install(FILES "${PYCLAW_PYTHON}/state.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/pyclaw")
-install(FILES "${PYCLAW_PYTHON}/solution.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/pyclaw")
-install(FILES "${PYCLAW_PYTHON}/geometry.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/pyclaw")
-install(DIRECTORY "${PYCLAW_PYTHON}/fileio" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/pyclaw")
+install(FILES "${PYCLAW}/LICENSE" DESTINATION "${DEST}/pyclaw")
+install(FILES "${PYCLAW_PYTHON}/util.py" DESTINATION "${DEST}/pyclaw")
+install(FILES "${PYCLAW_PYTHON}/state.py" DESTINATION "${DEST}/pyclaw")
+install(FILES "${PYCLAW_PYTHON}/solution.py" DESTINATION "${DEST}/pyclaw")
+install(FILES "${PYCLAW_PYTHON}/geometry.py" DESTINATION "${DEST}/pyclaw")
+install(DIRECTORY "${PYCLAW_PYTHON}/fileio" DESTINATION "${DEST}/pyclaw")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/pyclaw_init.py" DESTINATION "${DEST}/pyclaw" RENAME "__init__.py")
 
 # install clawutil's Python module
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/clawutil_init.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/clawutil" RENAME "__init__.py")
-install(FILES "${CLAWUTIL_PYTHON}/data.py" DESTINATION "${CMAKE_INSTALL_LIBDIR}/gclandspill/clawutil")
+install(FILES "${CLAWUTIL}/LICENSE" DESTINATION "${DEST}/clawutil")
+install(FILES "${CLAWUTIL_PYTHON}/data.py" DESTINATION "${DEST}/clawutil")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/clawutil_init.py" DESTINATION "${DEST}/clawutil" RENAME "__init__.py")

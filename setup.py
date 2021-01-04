@@ -12,65 +12,18 @@ import re
 import pathlib
 import skbuild
 
+# the absolute path to the root directory
+rootdir = pathlib.Path(__file__).resolve().parent
 
-def get_strings():
-    """Get content of __version__, description, and README.
-
-    Note for __version__:
-        It's is not recommended to get __version__ by importing the package
-        because it may cause problems if __init__.py imports packages that will
-        be listed in install_requires of setuptools.setup. So instead, it is
-        recommended to use string parsing to obtain the version.
-
-    For description, it's just convenient to mantain such string at a single
-    place.
-
-    Args:
-    -----
-        None.
-
-    Returns:
-    --------
-        version: a str: the version string.
-        desc: a str: one line description summarizing the package.
-        readme: a str; the content of README.md.
-    """
-
-    # the absolute path to the root directory
-    rootdir = pathlib.Path(__file__).resolve().parent
-
-    # read README.md and overwrite readme
-    with open(rootdir.joinpath("README.md"), 'r') as fileobj:
-        readme = fileobj.read()
-
-    # read __init__.py
-    with open(rootdir.joinpath("geoclaw-landspill", "__init__.py"), 'r') as fileobj:
-        content = fileobj.read()
-
-    # version
-    version = re.search(r"__version__\s*?=\s*?(?P<version>\S+?)$", content, re.MULTILINE)
-    version = version.group("version").strip("\"\'")
-
-    # desc
-    desc = re.search(r"^\"\"\"(?P<desc>\S.*?)$", content, re.MULTILINE)
-    desc = desc.group("desc")
-
-    return version, desc, readme
-
-
-# basic information
+# basic package information
 meta = dict(
     name="geoclaw-landspill",
-    long_description_content_type="text/markdown",
     author="Pi-Yueh Chuang",
     author_email="pychuang@gwu.edu",
     url="https://github.com/barba/geoclaw-landspill",
     keywords=["landspill", "overland flow", "pipeline", "geoclaw", "clawpack"],
     license="BSD 3-Clause License",
 )
-
-# info from __init__.py
-meta["version"], meta["description"], meta["long_description"] = get_strings()
 
 # classifiers for categorizing; see https://pypi.org/classifiers/
 meta["classifiers"] = [
@@ -84,21 +37,47 @@ meta["classifiers"] = [
     "Topic :: Scientific/Engineering"
 ]
 
+# license files
+meta["license_files"] = [
+    "LICENSE",
+    "third-party/amrclaw/LICENSE",
+    "third-party/geoclaw/LICENSE",
+    "third-party/pyclaw/LICENSE",
+    "third-party/clawutil/LICENSE"
+]
+
+# version and short sescription (read from __init__.py)
+with open(rootdir.joinpath("geoclaw-landspill", "__init__.py"), 'r') as fileobj:
+    content = fileobj.read()
+    # version
+    meta["version"] = re.search(
+        r"__version__\s*?=\s*?(?P<version>\S+?)$", content, re.MULTILINE
+    ).group("version").strip("\"\'")
+    # one line description
+    meta["description"] = re.search(
+        r"^\"\"\"(?P<desc>\S.*?)$", content, re.MULTILINE
+    ).group("desc")
+
+# long  description (read from README.md)
+with open(rootdir.joinpath("README.md"), 'r') as fileobj:
+    meta["long_description"] = fileobj.read()
+    meta["long_description_content_type"] = "text/markdown"
+
+# dependencies
+with open(rootdir.joinpath("requirements.txt"), "r") as fileobj:
+    deps = fileobj.readlines()
+    meta["python_requires"] = ">=3.8"
+    meta["install_requires"] = [line.strip() for line in deps]
+
 # packages to be installed
-meta["packages"] = ["gclandspill", "gclandspill.clawutil", "gclandspill.pyclaw"]
-meta["package_dir"] = {
-    "gclandspill": "lib/gclandspill",
-    "gclandspill.amrclaw": "lib/gclandspill/amrclaw",
-    "gclandspill.geoclaw": "lib/gclandspill/geoclaw",
-    "gclandspill.clawutil": "lib/gclandspill/clawutil",
-    "gclandspill.pyclaw": "lib/gclandspill/pyclaw"
-}
+meta["packages"] = ["gclandspill"]
+meta["package_dir"] = {"gclandspill": "geoclaw-landspill"}
 
 # executable
 meta["entry_points"] = {"console_scripts": ["geoclaw-landspill = gclandspill.__main__:main"]}
 
 # scikit-build specific
-meta["cmake_with_sdist"] = True
+meta["cmake_with_sdist"] = False
 meta["cmake_languages"] = ["Fortran"]
 meta["cmake_minimum_required_version"] = "3.14"
 
