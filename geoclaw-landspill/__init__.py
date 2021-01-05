@@ -15,6 +15,7 @@ from . import pyclaw
 from . import clawutil
 from . import amrclaw
 from . import geoclaw
+from . import data
 
 # meta
 __version__ = "1.0.dev0"
