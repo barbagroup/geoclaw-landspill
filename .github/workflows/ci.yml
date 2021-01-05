@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build_and_test:
 
     runs-on: ubuntu-20.04
     strategy:
@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt -r requierments-build.txt
+          python -m pip install -r requirements.txt -r requirements-build.txt
       - name: Install geoclaw-landspill
         run: python setup.py install
       - name: Test with pytest
