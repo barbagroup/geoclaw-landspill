@@ -12,7 +12,11 @@ import os
 import sys
 import pathlib
 import importlib.util
-import typing
+
+try:
+    from typing import TypedDict
+except ImportError:  # when python version <= 3.7
+    from typing_extensions import TypedDict
 
 
 class AMRLevelError(Exception):
@@ -35,7 +39,7 @@ class NoFrameDataError(Exception):
     pass  # pylint: disable=unnecessary-pass
 
 
-class DatetimeCtrlParams(typing.TypedDict):
+class DatetimeCtrlParams(TypedDict):
     """A type definition for the `dict` controlling the timestamps."""
     apply_datetime_stamp = bool
     datetime_stamp = str

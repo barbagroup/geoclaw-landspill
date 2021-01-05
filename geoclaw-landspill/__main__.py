@@ -311,7 +311,7 @@ def run(args: argparse.Namespace):
         raise FileNotFoundError("Couldn't find solver at {}".format(solver))
 
     # execute the solver
-    result = subprocess.run(solver, capture_output=False, cwd=str(args.output), check=True)
+    result = subprocess.run([solver], capture_output=False, cwd=str(args.output), check=True)
 
     return result.returncode
 

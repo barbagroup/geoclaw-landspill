@@ -5,8 +5,8 @@ dist: focal
 language: python
 
 python:
+  - 3.7
   - 3.8
-  - 3.9
 
 install:
   - pip3 install -r requirements.txt -r requirements-build.txt

@@ -4,3 +4,4 @@ numpy>=1.19.4
 rasterio>=1.1.8
 netCDF4>=1.5.5.1
 matplotlib>=3.3.3
+typing_extensions>=3.7; python_version<="3.7"

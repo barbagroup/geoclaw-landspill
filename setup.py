@@ -66,7 +66,7 @@ with open(rootdir.joinpath("README.md"), 'r') as fileobj:
 # dependencies
 with open(rootdir.joinpath("requirements.txt"), "r") as fileobj:
     deps = fileobj.readlines()
-    meta["python_requires"] = ">=3.8"
+    meta["python_requires"] = ">=3.7"
     meta["install_requires"] = [line.strip() for line in deps]
 
 # packages to be installed
