@@ -1,0 +1,75 @@
+# multi-stage build: builder
+# ==========================
+Bootstrap: docker
+From: ubuntu:focal
+Stage: builder
+
+%environment
+    export MPLBACKEND=agg
+
+%post
+    # prepare environment
+    ln -snf /usr/share/zoneinfo/UTC /etc/localtime
+    echo UTC > /etc/timezone
+    apt update && apt -y full-upgrade
+    apt install -y --no-install-recommends git ca-certificates gfortran python3 python3-pip
+
+    # requires users to provide variable ${VER}
+    git clone --branch v1.0.dev1 --recurse-submodules https://github.com/barbagroup/geoclaw-landspill.git
+
+    # install dependencies
+    cd /geoclaw-landspill && pip3 install -r requirements-build.txt
+
+    # build binary wheel
+    cd /geoclaw-landspill && python3 setup.py bdist_wheel --build-type RELEASE
+
+
+# multi-stage build: production
+# =============================
+Bootstrap: docker
+From: ubuntu:focal
+Stage: production
+
+%labels
+    Author Pi-Yueh Chuang (pychuang@gwu.edu)
+    Version v1.0.dev1
+
+# copy data from builder
+%files from builder
+    /geoclaw-landspill/dist/geoclaw_landspill-*.whl /root
+    /geoclaw-landspill/cases /root/cases
+
+%post
+    # move example to a proper location
+    mv /root/cases /opt/geoclaw-landspill-cases 
+
+    # create runtime environment
+    ln -snf /usr/share/zoneinfo/UTC /etc/localtime && echo UTC > /etc/timezone
+    apt update && apt -y full-upgrade
+    apt install -y --no-install-recommends libgfortran5 libgomp1 python3 python3-pip
+    rm -rf /var/lib/apt/lists/*
+
+    # install geoclaw-landspill
+    pip3 install /root/geoclaw_landspill-*.whl && rm -f /root/geoclaw_landspill-*.whl
+
+%runscript
+    exec geoclaw-landspill $@
+
+%help
+
+    This help only covers the usage of this Singularity image. For the usage of
+    geoclaw-landspill package, see https://github.com/barbagroup/geoclaw-landspill
+
+    A Singularity image can be treated as an executable, which is equivalent to
+    the executable `geoclaw-landspill` from geoclaw-landspill package. Assuming
+    this Singularity image is called "landspill.sif", for example:
+
+        * To run a simulation: `$ landspill.sif run <path to case>`
+        * To create a NetCDF file: `$ landspill.sif createnc <path to case>`
+        * To create quick depth plots: `$ landspill.sif plotdepth <path to case>`
+
+    Alternatively, users can run these subcommands with, for example,
+
+        * To run a simulation: `$ singularity run landspill.sif run <path to case>`
+        * To create a NetCDF file: `$ singularity run landspill.sif createnc <path to case>`
+        * To create quick depth plots: `$ singularity run landspill.sif plotdepth <path to case>`
