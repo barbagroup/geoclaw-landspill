@@ -502,3 +502,88 @@ def convert_geojson_2_raster(feat_layers, filename, extent, res, crs=3857):
     dst.write(image, indexes=1)
 
     dst.close()
+
+
+def download_satellite_image(extent, filepath, force=False):
+    """Download a setellite image of the given extent.
+
+    Arguments
+    ---------
+        extent: a list of [xmin, ymin, xmax, ymax]
+            The bound of the domain.
+        filepath: os.PathLike
+            Where to save the image.
+        force: bool
+            Download regardless of if the file already exists.
+
+    Returns
+    -------
+        The extent of the saved image. The server does not always return the
+        image within exactly the extent. Sometimes the extent of the image is
+        larger, so we need to know.
+    """
+
+    filepath = pathlib.Path(filepath)
+
+    api_url = "http://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export"
+    extent_file = filepath.with_suffix(filepath.suffix+".extent")
+
+    # always with extra 5 pixels outside each boundary
+    extent[0] = int(extent[0]) - 5
+    extent[1] = int(extent[1]) - 5
+    extent[2] = int(extent[2]) + 5
+    extent[3] = int(extent[3]) + 5
+    width = extent[2] - extent[0]
+    height = extent[3] - extent[1]
+
+    # if image and extent info already exists, we may stop downloading and leave
+    if extent_file.is_file() and filepath.is_file() and not force:
+        with open(extent_file, "r") as fileobj:
+            img_extent = fileobj.readline()
+
+        img_extent = [float(i) for i in img_extent.strip().split()]
+        return img_extent
+
+    # REST API parameters
+    params = {
+        "bbox": "{},{},{},{}".format(*extent),
+        "bbSR": "3857",
+        "size": "{},{}".format(width, height),
+        "imageSR": "3857",
+        "format": "png",
+        "f": "json"
+    }
+
+    # create a HTTP session that can retry 5 times if 500, 502, 503, 504 happens
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(
+        max_retries=requests.packages.urllib3.util.retry.Retry(  # pylint: disable=no-member
+            total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504]
+        )
+    ))
+
+    # use GET to get response
+    respns = session.get(api_url, params=params)
+    respns.raise_for_status()  # raise an error if not success
+    respns = respns.json()  # convert to a dictionary
+    assert "href" in respns  # make sure the image's url is in the response
+
+    # download the file, retry unitl success or timeout
+    respns2 = session.get(respns["href"], stream=True, allow_redirects=True)
+    respns2.raise_for_status()
+
+    with open(filepath, "wb") as fileobj:
+        fileobj.write(respns2.content)
+
+    # close the session
+    session.close()
+
+    # write image extent to a text file
+    with open(extent_file, "w") as fileobj:
+        fileobj.write("{} {} {} {}".format(
+            respns["extent"]["xmin"], respns["extent"]["ymin"],
+            respns["extent"]["xmax"], respns["extent"]["ymax"]
+        ))
+
+    return [respns["extent"]["xmin"], respns["extent"]["ymin"],
+            respns["extent"]["xmax"], respns["extent"]["ymax"]]

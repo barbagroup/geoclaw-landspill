@@ -27,7 +27,7 @@ meta = dict(
 
 # classifiers for categorizing; see https://pypi.org/classifiers/
 meta["classifiers"] = [
-    "Development Status :: 1 - Planning"
+    "Development Status :: 1 - Planning",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
