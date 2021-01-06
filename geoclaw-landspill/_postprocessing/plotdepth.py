@@ -11,6 +11,7 @@ import os
 import copy
 import pathlib
 import argparse
+import tempfile
 import multiprocessing
 from typing import Sequence, Tuple
 
@@ -24,6 +25,7 @@ import matplotlib.cm
 from gclandspill import pyclaw
 from gclandspill import clawutil
 from gclandspill import _misc
+from gclandspill import _preprocessing
 from gclandspill import _postprocessing
 
 
@@ -56,26 +58,20 @@ def plot_depth(args: argparse.Namespace):
     args.level = rundata.amrdata.amr_levels_max if args.level is None else args.level
 
     # process args.frame_ed
-    if args.frame_ed is not None:
-        args.frame_ed += 1  # plus 1 so can be used as the `end` in the `range` function
-    elif rundata.clawdata.output_style == 1:  # if it's None, and the style is 1
-        args.frame_ed = rundata.clawdata.num_output_times
-        if rundata.clawdata.output_t0:
-            args.frame_ed += 1
-    elif rundata.clawdata.output_style == 2:  # if it's None, and the style is 2
-        args.frame_ed = len(rundata.clawdata.output_times)
-    elif rundata.clawdata.output_style == 3:  # if it's None, and the style is 3
-        args.frame_ed = int(rundata.clawdata.total_steps / rundata.clawdata.output_step_interval)
-        if rundata.clawdata.output_t0:
-            args.frame_ed += 1
+    args.frame_ed = _misc.update_frame_range(args.frame_ed, rundata)
 
     # process args.soln_dir
     args.soln_dir = _misc.process_path(args.soln_dir, args.case, "_output")
     _misc.check_folder(args.soln_dir)
 
     # process args.dest_dir
-    args.dest_dir = _misc.process_path(
-        args.dest_dir, args.case, "_plots/depth/level{:02d}".format(args.level))
+    if args.use_sat:
+        args.dest_dir = _misc.process_path(
+            args.dest_dir, args.case, "_plots/sat/level{:02d}".format(args.level))
+    else:
+        args.dest_dir = _misc.process_path(
+            args.dest_dir, args.case, "_plots/depth/level{:02d}".format(args.level))
+
     os.makedirs(args.dest_dir, exist_ok=True)  # make sure the folder exists
 
     # process args.extent
@@ -107,10 +103,24 @@ def plot_depth(args: argparse.Namespace):
         child_args[-1][0].frame_bg = child_args[-2][0].frame_ed
         child_args[-1][0].frame_ed = child_args[-1][0].frame_bg + per_proc
 
+    # download satellite image if necessarry
+    if args.use_sat:
+        with tempfile.TemporaryDirectory() as tempdir:
+            sat_extent = _preprocessing.download_satellite_image(
+                args.extent, pathlib.Path(tempdir).joinpath("sat_img.png"))
+            sat_img = matplotlib.pyplot.imread(pathlib.Path(tempdir).joinpath("sat_img.png"))
+
+        for i in range(args.nprocs):
+            child_args[i][1] = copy.deepcopy(sat_img)  # replace rundata with satellite image
+            child_args[i].append(copy.deepcopy(sat_extent))
+
     # plot
     print("Spawning plotting tasks to {} processes: ".format(args.nprocs))
     with multiprocessing.Pool(args.nprocs, lambda: print("PID {}".format(os.getpid()))) as pool:
-        pool.starmap(plot_soln_frames, child_args)
+        if args.use_sat:
+            pool.starmap(plot_soln_frames_on_sat, child_args)
+        else:
+            pool.starmap(plot_soln_frames, child_args)
 
     return 0
 
@@ -163,6 +173,70 @@ def plot_soln_frames(args: argparse.Namespace, rundata: clawutil.data.ClawRunDat
 
         # solution depth colorbar
         fig.colorbar(matplotlib.cm.ScalarMappable(cmscale_s, cmap_s), cax=axes[2])
+
+        fig.suptitle("T = {} sec".format(soln.state.t))  # title
+        fig.savefig(args.dest_dir.joinpath("frame{:05d}.png".format(fno)))  # save
+
+        # clear artists
+        while True:
+            try:
+                img = imgs.pop()
+                img.remove()
+                del img
+            except IndexError:
+                break
+
+    print("PID {} done processing frames {} - {}".format(os.getpid(), args.frame_bg, args.frame_ed))
+    return 0
+
+
+def plot_soln_frames_on_sat(
+        args: argparse.Namespace,
+        satellite_img: numpy.ndarray,
+        satellite_extent: Tuple[float, float, float, float]):
+    """Plot solution frames on a satellite image.
+
+    Currently, this function is supposed to be called by `plot_depth` with multiprocessing.
+
+    Argumenst
+    ---------
+    args : argparse.Namespace
+        CMD argument parsed by `argparse`.
+    satellite_img : numpy.ndarray,
+        The RBG data for the satellite image.
+    satellite_extent : Tuple[float, float, float, float]):
+        The extent of the satellite image.
+
+    Returns
+    -------
+    Execution code. 0 for success.
+    """
+
+    # plot
+    fig, axes = matplotlib.pyplot.subplots()
+
+    axes.imshow(
+        satellite_img,
+        extent=[satellite_extent[0], satellite_extent[2], satellite_extent[1], satellite_extent[3]]
+    )
+
+    for fno in range(args.frame_bg, args.frame_ed):
+
+        print("Processing frame {} by PID {}".format(fno, os.getpid()))
+
+        # read in solution data
+        soln = pyclaw.Solution()
+        soln.read(
+            fno, str(args.soln_dir), file_format="binary",
+            read_aux=args.soln_dir.joinpath("fort.a"+"{}".format(fno).zfill(4)).is_file()
+        )
+
+        axes, imgs, _, _ = plot_soln_frame_on_ax(
+            axes, soln, args.level, [args.cmin, args.cmax], args.dry_tol,
+            cmap=args.cmap, border=args.border)
+
+        axes.set_xlim(satellite_extent[0], satellite_extent[2])
+        axes.set_ylim(satellite_extent[1], satellite_extent[3])
 
         fig.suptitle("T = {} sec".format(soln.state.t))  # title
         fig.savefig(args.dest_dir.joinpath("frame{:05d}.png".format(fno)))  # save

@@ -143,3 +143,35 @@ def process_path(path, parent, default):
         return path
 
     return pathlib.Path(parent).joinpath(path)
+
+
+def update_frame_range(frame_ed: int, rundata):
+    """Update the frame range in args.
+
+    Arguments
+    ---------
+    frame_ed : int
+        The original end frame number.
+    rundata : clawutil.ClawRunData
+        The configuration object of a simulation case.
+
+    Returns
+    -------
+    new_frame_ed : int
+        The updated value of end frame number.
+    """
+
+    if frame_ed is not None:
+        new_frame_ed = frame_ed + 1  # plus 1 so can be used as the `end` in the `range` function
+    elif rundata.clawdata.output_style == 1:  # if it's None, and the style is 1
+        new_frame_ed = rundata.clawdata.num_output_times
+        if rundata.clawdata.output_t0:
+            new_frame_ed += 1
+    elif rundata.clawdata.output_style == 2:  # if it's None, and the style is 2
+        new_frame_ed = len(rundata.clawdata.output_times)
+    elif rundata.clawdata.output_style == 3:  # if it's None, and the style is 3
+        new_frame_ed = int(rundata.clawdata.total_steps / rundata.clawdata.output_step_interval)
+        if rundata.clawdata.output_t0:
+            new_frame_ed += 1
+
+    return new_frame_ed

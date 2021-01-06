@@ -154,6 +154,9 @@ def main():
         '--cmap', dest="cmap", action="store", type=str, default="viridis",
         help='Colormap name for depth plosts (default: viridis)')
     parser_plotdepth.add_argument(
+        '--use-sat', dest="use_sat", action="store_true",
+        help="If sepcified, use satellite image instead of topography as the background.")
+    parser_plotdepth.add_argument(
         '--no-topo', dest="no_topo", action="store_true",
         help="If sepcified, don't plot the topography below the depth.")
     parser_plotdepth.add_argument(
