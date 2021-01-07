@@ -47,7 +47,7 @@ meta["license_files"] = [
 ]
 
 # version and short sescription (read from __init__.py)
-with open(rootdir.joinpath("geoclaw-landspill", "__init__.py"), 'r') as fileobj:
+with open(rootdir.joinpath("gclandspill", "__init__.py"), 'r') as fileobj:
     content = fileobj.read()
     # version
     meta["version"] = re.search(
@@ -71,7 +71,7 @@ with open(rootdir.joinpath("requirements.txt"), "r") as fileobj:
 
 # packages to be installed
 meta["packages"] = ["gclandspill"]
-meta["package_dir"] = {"gclandspill": "geoclaw-landspill"}
+meta["package_dir"] = {"gclandspill": "gclandspill"}
 
 # executable
 meta["entry_points"] = {"console_scripts": ["geoclaw-landspill = gclandspill.__main__:main"]}

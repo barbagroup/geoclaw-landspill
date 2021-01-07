@@ -1,5 +1,5 @@
 # use this variable to shorten the paths
-set(LANDSPILLLIB "${CMAKE_SOURCE_DIR}/geoclaw-landspill/src")
+set(LANDSPILLLIB "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # geoclaw-landspill-bin
 add_executable(geoclaw-landspill-bin

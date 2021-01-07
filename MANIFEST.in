@@ -7,7 +7,7 @@ include pyproject.toml
 include CMakeLists.txt
 
 # main source files and cmake files
-graft geoclaw-landspill
+graft gclandspill
 include third-party/CMakeLists.txt
 
 # install amrclaw's Python module

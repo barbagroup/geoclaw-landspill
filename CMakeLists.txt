@@ -47,7 +47,7 @@ endif()
 if(SKBUILD)
     message(STATUS "Built using scikit-build -- yes")
     find_package(PythonExtensions REQUIRED)  # scikit-build tries to set variables to this package?
-    set(DEST "geoclaw-landspill")
+    set(DEST "gclandspill")
 else()
     message(STATUS "Built using scikit-build -- no")
     set(DEST "${CMAKE_INSTALL_LIBDIR}/gclandspill")
@@ -58,7 +58,7 @@ message(STATUS "Python packages/modules will install to ${DEST}")
 add_subdirectory(third-party)
 
 # main program
-add_subdirectory(geoclaw-landspill)
+add_subdirectory(gclandspill)
 
 # print info
 message("")
