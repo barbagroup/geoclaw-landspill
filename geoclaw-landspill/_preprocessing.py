@@ -119,6 +119,9 @@ def check_download_topo(case_dir: os.PathLike, rundata: clawutil.data.ClawRunDat
     ext[2] += res
     ext[3] += res
 
+    # to indicate we've already download the topo once
+    downloaded = None
+
     # check and download each topography file
     for topo in rundata.topo_data.topofiles:  # each topofile is represented as a list
         if os.path.isabs(topo[-1]):  # the topo filename is at the last element of the list
@@ -126,14 +129,23 @@ def check_download_topo(case_dir: os.PathLike, rundata: clawutil.data.ClawRunDat
         else:
             topo_file = case_dir.joinpath(topo[-1]).resolve()
 
-        check_download_topo_single(topo_file, ext, res)
+        if topo_file.is_file():
+            print("Topo file {} found. ".format(topo_file) + "Re-use it.")
+            continue  # skip downloading
+
+        if downloaded is None:
+            print("Topo file {} not found. ".format(topo_file) + "Download it now.")
+            downloaded = download_topo_single(topo_file, ext, res)
+        else:  # already downloaded once, just check and copy that file
+            print("Topo file {} not found. ".format(topo_file) + "Copy from {}.".format(downloaded))
+            shutil.copyfile(downloaded, topo_file)
 
 
-def check_download_topo_single(
+def download_topo_single(
         topo_file: os.PathLike,
         ext: Tuple[float, float, float, float],
         res: float):
-    """Check if a topo file exists and download it if not.
+    """Download a topo file.
 
     Arguments
     ---------
@@ -143,14 +155,13 @@ def check_download_topo_single(
         Extent of the topo, i.e., [x_min, y_min, x_max, y_max]
     res : float
         Resolution of the topo file.
+
+    Returns
+    -------
+    The path to the downloaded file. Should be the same as the provided `topo_file`.
     """
+
     topo_file = pathlib.Path(topo_file).resolve()
-
-    if topo_file.is_file():
-        print("Topo file {} found. ".format(topo_file) + "Re-use it.")
-        return
-
-    print("Topo file {} not found. ".format(topo_file) + "Download it now.")
 
     # prepare the folders
     os.makedirs(topo_file.parent, exist_ok=True)
@@ -167,6 +178,8 @@ def check_download_topo_single(
 
     # remove the GeoTiff
     os.remove(topo_file.with_suffix(".tif"))
+
+    return topo_file
 
 
 def check_download_hydro(case_dir: os.PathLike, rundata: clawutil.data.ClawRunData):
