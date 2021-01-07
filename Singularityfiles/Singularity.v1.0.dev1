@@ -36,7 +36,7 @@ Stage: production
 
 # copy data from builder
 %files from builder
-    /geoclaw-landspill/dist/geoclaw_landspill-*.whl /root
+    /geoclaw-landspill/dist /root/dist
     /geoclaw-landspill/cases /root/cases
 
 %post
@@ -50,7 +50,8 @@ Stage: production
     rm -rf /var/lib/apt/lists/*
 
     # install geoclaw-landspill
-    pip3 install /root/geoclaw_landspill-*.whl && rm -f /root/geoclaw_landspill-*.whl
+    echo $(find /root -name "*.whl")
+    pip3 install $(find /root -name "*.whl") && rm -rf /root/*
 
 %runscript
     exec geoclaw-landspill $@
