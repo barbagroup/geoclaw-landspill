@@ -254,12 +254,12 @@ def get_topo_max(soln_dir: os.PathLike, frame_bg: int, frame_ed: int, level: int
     return vmax
 
 
-def get_topo_lims(topo_files: Sequence[Tuple[int, os.PathLike]], **kwargs):
+def get_topo_lims(topo_files: Sequence[os.PathLike], **kwargs):
     """Get the min and max elevation from a set of topography files.
 
     Arguments
     ---------
-    topo_files : tuple/lsit of sub-tuples/lists of [int, pathlike]
+    topo_files : tuple/lsit of pathlike.PathLike
         A list of list following the topography files specification in GeoClaw's settings.
     **kwargs :
         Available keyword arguments are:
@@ -275,11 +275,7 @@ def get_topo_lims(topo_files: Sequence[Tuple[int, os.PathLike]], **kwargs):
     extent = None if "extent" not in kwargs else kwargs["extent"]
 
     # use mosaic raster to obtain interpolated terrain
-    rasters = []
-    for topo in topo_files:
-        if topo[0] != 3:
-            raise _misc.WrongTopoFileError("Only accept type 3 topography file: {}".format(topo[0]))
-        rasters.append(rasterio.open(topo[-1], "r"))
+    rasters = [rasterio.open(topo, "r") for topo in topo_files]
 
     # merge and interplate
     dst, _ = rasterio.merge.merge(rasters, extent)

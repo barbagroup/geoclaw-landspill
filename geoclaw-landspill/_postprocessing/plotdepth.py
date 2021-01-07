@@ -23,7 +23,6 @@ import matplotlib.axes
 import matplotlib.colors
 import matplotlib.cm
 from gclandspill import pyclaw
-from gclandspill import clawutil
 from gclandspill import _misc
 from gclandspill import _preprocessing
 from gclandspill import _postprocessing
@@ -51,14 +50,8 @@ def plot_depth(args: argparse.Namespace):
     args.case = pathlib.Path(args.case).expanduser().resolve()
     _misc.check_folder(args.case)
 
-    # case's setrun data
-    rundata = _misc.import_setrun(args.case).setrun()
-
-    # process target AMR level
-    args.level = rundata.amrdata.amr_levels_max if args.level is None else args.level
-
-    # process args.frame_ed
-    args.frame_ed = _misc.update_frame_range(args.frame_ed, rundata)
+    # process level, frame_ed, topofilee, and dry_tol
+    args = _misc.extract_info_from_setrun(args)
 
     # process args.soln_dir
     args.soln_dir = _misc.process_path(args.soln_dir, args.case, "_output")
@@ -79,10 +72,6 @@ def plot_depth(args: argparse.Namespace):
         args.extent = _postprocessing.calc.get_soln_extent(
             args.soln_dir, args.frame_bg, args.frame_ed, args.level)
 
-    # process args.dry_rol
-    if args.dry_tol is None:  # get the dry tolerance from setrun.py
-        args.dry_tol = rundata.geo_data.dry_tolerance
-
     # process the max of solution
     if args.cmax is None:
         args.cmax = _postprocessing.calc.get_soln_max(
@@ -90,29 +79,30 @@ def plot_depth(args: argparse.Namespace):
 
     # prepare args for child processes (also initialize for the first proc)
     per_proc = (args.frame_ed - args.frame_bg) // args.nprocs  # number of frames per porcess
-    child_args = [[copy.deepcopy(args), copy.deepcopy(rundata)]]
-    child_args[0][0].frame_bg = args.frame_bg
-    child_args[0][0].frame_ed = args.frame_bg + per_proc
+    child_args = [copy.deepcopy(args)]
+    child_args[0].frame_bg = args.frame_bg
+    child_args[0].frame_ed = args.frame_bg + per_proc
 
     # the first process has to do more jobs ...
-    child_args[0][0].frame_ed += (args.frame_ed - args.frame_bg) % args.nprocs
+    child_args[0].frame_ed += (args.frame_ed - args.frame_bg) % args.nprocs
 
     # remaining processes
     for _ in range(args.nprocs-1):
-        child_args.append([copy.deepcopy(args), copy.deepcopy(rundata)])
-        child_args[-1][0].frame_bg = child_args[-2][0].frame_ed
-        child_args[-1][0].frame_ed = child_args[-1][0].frame_bg + per_proc
+        child_args.append(copy.deepcopy(args))
+        child_args[-1].frame_bg = child_args[-2].frame_ed
+        child_args[-1].frame_ed = child_args[-1].frame_bg + per_proc
 
-    # download satellite image if necessarry
+    # if using satellite image as the background
     if args.use_sat:
+        # download satellite image if necessarry
         with tempfile.TemporaryDirectory() as tempdir:
             sat_extent = _preprocessing.download_satellite_image(
                 args.extent, pathlib.Path(tempdir).joinpath("sat_img.png"))
             sat_img = matplotlib.pyplot.imread(pathlib.Path(tempdir).joinpath("sat_img.png"))
 
+        # change the function arguments
         for i in range(args.nprocs):
-            child_args[i][1] = copy.deepcopy(sat_img)  # replace rundata with satellite image
-            child_args[i].append(copy.deepcopy(sat_extent))
+            child_args[i] = [child_args[i], copy.deepcopy(sat_img), copy.deepcopy(sat_extent)]
 
     # plot
     print("Spawning plotting tasks to {} processes: ".format(args.nprocs))
@@ -120,12 +110,12 @@ def plot_depth(args: argparse.Namespace):
         if args.use_sat:
             pool.starmap(plot_soln_frames_on_sat, child_args)
         else:
-            pool.starmap(plot_soln_frames, child_args)
+            pool.map(plot_soln_frames, child_args)
 
     return 0
 
 
-def plot_soln_frames(args: argparse.Namespace, rundata: clawutil.data.ClawRunData):
+def plot_soln_frames(args: argparse.Namespace):
     """Plot solution frames.
 
     Currently, this function is supposed to be called by `plot_depth` with multiprocessing.
@@ -134,8 +124,6 @@ def plot_soln_frames(args: argparse.Namespace, rundata: clawutil.data.ClawRunDat
     ---------
     args : argparse.Namespace
         CMD argument parsed by `argparse`.
-    rundata : clawutil.data.ClawRunData
-        The `ClawRunData` object holding simulation configuration.
 
     Returns
     -------
@@ -146,7 +134,7 @@ def plot_soln_frames(args: argparse.Namespace, rundata: clawutil.data.ClawRunDat
     fig, axes = matplotlib.pyplot.subplots(1, 3, gridspec_kw={"width_ratios": [10, 1, 1]})
 
     axes[0], _, cmap_t, cmscale_t = plot_topo_on_ax(
-        axes[0], rundata.topo_data.topofiles, args.colorize, extent=args.extent,
+        axes[0], args.topofiles, args.colorize, extent=args.extent,
         degs=[args.topo_azdeg, args.topo_altdeg], clims=[args.topo_cmin, args.topo_cmax]
     )
 
@@ -256,7 +244,7 @@ def plot_soln_frames_on_sat(
 
 def plot_topo_on_ax(
     axes: matplotlib.axes.Axes,
-    topo_files: Sequence[Tuple[int, os.PathLike]],
+    topo_files: Sequence[os.PathLike],
     colorize: bool = False,
     **kwargs: str
 ):
@@ -266,7 +254,7 @@ def plot_topo_on_ax(
     ---------
     axes : matplotlib.axes.Axes
         The target Axes object.
-    topo_files : tuple/lsit of sub-tuples/lists of [int, pathlike]
+    topo_files : tuple/lsit of pathlike
         A list of list following the topography files specification in GeoClaw's settings.
     colorize : bool
         Whether to use colorized colormap for the elevation. (default: False).
@@ -302,11 +290,7 @@ def plot_topo_on_ax(
     nodata = -9999 if "nodata" not in kwargs else kwargs["nodata"]
 
     # use mosaic raster to obtain interpolated terrain
-    rasters = []
-    for topo in topo_files:
-        if topo[0] != 3:
-            raise _misc.WrongTopoFileError("Only accept type 3 topography file: {}".format(topo[0]))
-        rasters.append(rasterio.open(topo[-1], "r"))
+    rasters = [rasterio.open(topo, "r") for topo in topo_files]
 
     # merge and interplate
     dst, affine = rasterio.merge.merge(rasters, extent)

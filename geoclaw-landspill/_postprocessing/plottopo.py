@@ -47,25 +47,8 @@ def plot_topo(args: argparse.Namespace):
     args.case = pathlib.Path(args.case).expanduser().resolve()
     _misc.check_folder(args.case)
 
-    # case's setrun data
-    rundata = _misc.import_setrun(args.case).setrun()
-
-    # process target AMR level
-    args.level = rundata.amrdata.amr_levels_max if args.level is None else args.level
-
-    # process args.frame_ed
-    if args.frame_ed is not None:
-        args.frame_ed += 1  # plus 1 so can be used as the `end` in the `range` function
-    elif rundata.clawdata.output_style == 1:  # if it's None, and the style is 1
-        args.frame_ed = rundata.clawdata.num_output_times
-        if rundata.clawdata.output_t0:
-            args.frame_ed += 1
-    elif rundata.clawdata.output_style == 2:  # if it's None, and the style is 2
-        args.frame_ed = len(rundata.clawdata.output_times)
-    elif rundata.clawdata.output_style == 3:  # if it's None, and the style is 3
-        args.frame_ed = int(rundata.clawdata.total_steps / rundata.clawdata.output_step_interval)
-        if rundata.clawdata.output_t0:
-            args.frame_ed += 1
+    # process level, frame_ed, dry_tol, and topofiles
+    args = _misc.extract_info_from_setrun(args)
 
     # process args.soln_dir
     args.soln_dir = _misc.process_path(args.soln_dir, args.case, "_output")
@@ -80,7 +63,7 @@ def plot_topo(args: argparse.Namespace):
         args.extent = _postprocessing.calc.get_soln_extent(
             args.soln_dir, args.frame_bg, args.frame_ed, args.level)
 
-    lims = _postprocessing.calc.get_topo_lims(rundata.topo_data.topofiles, extent=args.extent)
+    lims = _postprocessing.calc.get_topo_lims(args.topofiles, extent=args.extent)
 
     # process cmax and cmin
     args.cmin = lims[0] if args.cmin is None else args.cmin

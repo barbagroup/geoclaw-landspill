@@ -22,22 +22,11 @@ def create_volume_csv(args: argparse.Namespace):
     args.case = pathlib.Path(args.case).expanduser().resolve()
     _misc.check_folder(args.case)
 
-    # case's setrun data
-    rundata = _misc.import_setrun(args.case).setrun()
+    # manually add a key `level` with value None, so we can get max AMR level from the next function
+    args.level = None
 
-    # process args.frame_ed
-    if args.frame_ed is not None:
-        args.frame_ed += 1  # plus 1 so can be used as the `end` in the `range` function
-    elif rundata.clawdata.output_style == 1:  # if it's None, and the style is 1
-        args.frame_ed = rundata.clawdata.num_output_times
-        if rundata.clawdata.output_t0:
-            args.frame_ed += 1
-    elif rundata.clawdata.output_style == 2:  # if it's None, and the style is 2
-        args.frame_ed = len(rundata.clawdata.output_times)
-    elif rundata.clawdata.output_style == 3:  # if it's None, and the style is 3
-        args.frame_ed = int(rundata.clawdata.total_steps / rundata.clawdata.output_step_interval)
-        if rundata.clawdata.output_t0:
-            args.frame_ed += 1
+    # process level, frame_ed, topofilee, and dry_tol
+    args = _misc.extract_info_from_setrun(args)
 
     # process args.soln_dir
     args.soln_dir = _misc.process_path(args.soln_dir, args.case, "_output")
@@ -52,15 +41,14 @@ def create_volume_csv(args: argparse.Namespace):
     os.makedirs(args.filename.parent, exist_ok=True)  # make sure the parent folder exists
 
     # get volume data with shape (n_levels, n_frames)
-    data = _postprocessing.calc.get_total_volume(
-        args.soln_dir, args.frame_bg, args.frame_ed, rundata.amrdata.amr_levels_max)
+    data = _postprocessing.calc.get_total_volume(args.soln_dir, args.frame_bg, args.frame_ed, args.level)
 
     with open(args.filename, "w") as fileobj:
-        line = "frame" + ",level {}" * rundata.amrdata.amr_levels_max + "\n"
-        fileobj.write(line.format(*list(range(1, rundata.amrdata.amr_levels_max+1))))
+        line = "frame" + ",level {}" * args.level + "\n"
+        fileobj.write(line.format(*list(range(1, args.level+1))))
 
         for ifno, fno in enumerate(range(args.frame_bg, args.frame_ed)):
-            line = "{}" + ",{}" * rundata.amrdata.amr_levels_max + "\n"
+            line = "{}" + ",{}" * args.level + "\n"
             fileobj.write(line.format(fno, *data[ifno]))
 
     return 0

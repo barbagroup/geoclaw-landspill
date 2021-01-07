@@ -11,6 +11,7 @@
 import os
 import sys
 import pathlib
+import argparse
 import importlib.util
 
 try:
@@ -145,33 +146,88 @@ def process_path(path, parent, default):
     return pathlib.Path(parent).joinpath(path)
 
 
-def update_frame_range(frame_ed: int, rundata):
-    """Update the frame range in args.
+def extract_info_from_setrun(args: argparse.Namespace):
+    """Extract frequently used information from a setrun.py and write to a CMD argument object.
+
+    In post-processing functions, Some information is frequently requested from a setrun.py and set
+    into a argparse.Namespace object. This function does this job. Currently, the following values
+    are processed:
+
+    * args.level: maximum AMR level
+    * args.frame_ed: the end frame number
+    * args.dry_tol: dry tolerance
+    * args.topofiles: a list of topography file paths (abs paths)
+
+    If the provided `args` does not have these keys present, they will be ignore, except
+    `topofiles`. Currently, no subcommand set `topofiles` in `args` in geoclaw-landspill. So
+    `topofiles` will always be created in this function.
+
+    The provided `args` must have the key `case`. And it is assumed to be a pathlib.Path object.
 
     Arguments
     ---------
-    frame_ed : int
-        The original end frame number.
-    rundata : clawutil.ClawRunData
-        The configuration object of a simulation case.
+    args : argparse.Namespace
+        The CMD arguments parsed by the sub-parsers of subcommands.
 
     Returns
     -------
-    new_frame_ed : int
-        The updated value of end frame number.
+    The same `args` object with updated values.
     """
 
-    if frame_ed is not None:
-        new_frame_ed = frame_ed + 1  # plus 1 so can be used as the `end` in the `range` function
-    elif rundata.clawdata.output_style == 1:  # if it's None, and the style is 1
-        new_frame_ed = rundata.clawdata.num_output_times
-        if rundata.clawdata.output_t0:
-            new_frame_ed += 1
-    elif rundata.clawdata.output_style == 2:  # if it's None, and the style is 2
-        new_frame_ed = len(rundata.clawdata.output_times)
-    elif rundata.clawdata.output_style == 3:  # if it's None, and the style is 3
-        new_frame_ed = int(rundata.clawdata.total_steps / rundata.clawdata.output_step_interval)
-        if rundata.clawdata.output_t0:
-            new_frame_ed += 1
+    def test_and_set_amr_level():
+        """Local function to avoid pylint's complaint: test and set AMR maximum level."""
+        try:
+            if args.level is None:
+                args.level = rundata.amrdata.amr_levels_max
+        except AttributeError as err:
+            if str(err).startswith("'Namespace' object"):
+                pass
 
-    return new_frame_ed
+    def test_and_set_frame_ed():
+        """Local function to avoid pylint's complaint: test and set end frame number."""
+        try:
+            if args.frame_ed is not None:
+                args.frame_ed += 1  # plus 1 so it can be used as the `end` in the `range` function
+            elif rundata.clawdata.output_style == 1:  # if it's None, and the style is 1
+                args.frame_ed = rundata.clawdata.num_output_times
+                if rundata.clawdata.output_t0:
+                    args.frame_ed += 1
+            elif rundata.clawdata.output_style == 2:  # if it's None, and the style is 2
+                args.frame_ed = len(rundata.clawdata.output_times)
+            elif rundata.clawdata.output_style == 3:  # if it's None, and the style is 3
+                args.frame_ed = rundata.clawdata.total_steps // rundata.clawdata.output_step_interval
+                if rundata.clawdata.output_t0:
+                    args.frame_ed += 1
+        except AttributeError as err:
+            if str(err).startswith("'Namespace' object"):
+                pass
+
+    def test_and_set_dry_tol():
+        """Local function to avoid pylint's complaint: test and set dry tolerance."""
+        try:
+            if args.dry_tol is None:
+                args.dry_tol = rundata.geo_data.dry_tolerance
+        except AttributeError as err:
+            if str(err).startswith("'Namespace' object"):
+                pass
+
+    # get the case's setrun data
+    rundata = import_setrun(args.case).setrun()
+
+    test_and_set_amr_level()
+    test_and_set_frame_ed()
+    test_and_set_dry_tol()
+
+    # always create topofiles
+    args.topofiles = []
+    for topo in rundata.topo_data.topofiles:
+        if topo[0] != 3:
+            raise WrongTopoFileError("Only accept type-3 topography: {} at {}".format(*topo))
+
+        topo[-1] = pathlib.Path(topo[-1])
+        if not topo[-1].is_absolute():
+            topo[-1] = args.case.joinpath(topo[-1]).resolve()
+
+        args.topofiles.append(topo[-1])
+
+    return args
