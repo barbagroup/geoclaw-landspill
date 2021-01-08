@@ -2,9 +2,11 @@
 cmake_minimum_required(VERSION 3.14)
 
 # cached variables
-set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Either DEBUG or RELEASE")
+set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Either DEBUG, Debug, RELEASE, or Release")
 set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "Compilation flags for release build.")
+set(CMAKE_Fortran_FLAGS_Release "-O3 -DNDEBUG" CACHE STRING "Compilation flags for release build.")
 set(CMAKE_Fortran_FLAGS_DEBUG "-g" CACHE STRING "Compilation flags for debug build.")
+set(CMAKE_Fortran_FLAGS_Debug "-g" CACHE STRING "Compilation flags for debug build.")
 
 # project initialization
 project(geoclaw-landspill Fortran)
@@ -45,7 +47,7 @@ endif()
 if(SKBUILD)
     message(STATUS "Built using scikit-build -- yes")
     find_package(PythonExtensions REQUIRED)  # scikit-build tries to set variables to this package?
-    set(DEST "geoclaw-landspill")
+    set(DEST "gclandspill")
 else()
     message(STATUS "Built using scikit-build -- no")
     set(DEST "${CMAKE_INSTALL_LIBDIR}/gclandspill")
@@ -56,7 +58,7 @@ message(STATUS "Python packages/modules will install to ${DEST}")
 add_subdirectory(third-party)
 
 # main program
-add_subdirectory(geoclaw-landspill)
+add_subdirectory(gclandspill)
 
 # print info
 message("")
