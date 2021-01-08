@@ -54,12 +54,12 @@ in the section of Docker usage. Also, the Singularity image can be used as an
 executable, which is equivalent to the executable `geoclaw-landspill`. For
 example, to run a case:
 ```
-$ landspill-<version>.sif run <case on the host>
+$ ./landspill-<version>.sif run <case on the host>
 ```
 
 Or, to see the help of subcommand `plotdepth`:
 ```
-$ landspill-<version>.sif plotdepth --help
+$ ./landspill-<version>.sif plotdepth --help
 ```
 
 Alternatively, to run a Singularity image with the regular approach and, for
@@ -72,7 +72,7 @@ Singularity automatically maps some folders on the host into a container. For
 example, a user's `$HOME`. So if there's a case at a user's `$HOME`, such as
 `$HOME/smaple_case`, then the user can do
 ```
-$ landspill-<version>.sif run $HOME/sample_case
+$ ./landspill-<version>.sif run $HOME/sample_case
 ```
 without copying case data into the container. Please refer to Singularity's
 documentation for more details.
