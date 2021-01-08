@@ -131,12 +131,15 @@ def plot_soln_frames(args: argparse.Namespace):
     """
 
     # plot
-    fig, axes = matplotlib.pyplot.subplots(1, 3, gridspec_kw={"width_ratios": [10, 1, 1]})
+    if args.no_topo:
+        fig, axes = matplotlib.pyplot.subplots(1, 2, gridspec_kw={"width_ratios": [10, 1]})
+    else:
+        fig, axes = matplotlib.pyplot.subplots(1, 3, gridspec_kw={"width_ratios": [10, 1, 1]})
 
-    axes[0], _, cmap_t, cmscale_t = plot_topo_on_ax(
-        axes[0], args.topofiles, args.colorize, extent=args.extent,
-        degs=[args.topo_azdeg, args.topo_altdeg], clims=[args.topo_cmin, args.topo_cmax]
-    )
+        axes[0], _, cmap_t, cmscale_t = plot_topo_on_ax(
+            axes[0], args.topofiles, args.colorize, extent=args.extent,
+            degs=[args.topo_azdeg, args.topo_altdeg], clims=[args.topo_cmin, args.topo_cmax]
+        )
 
     for fno in range(args.frame_bg, args.frame_ed):
 
@@ -156,11 +159,12 @@ def plot_soln_frames(args: argparse.Namespace):
         axes[0].set_xlim(args.extent[0], args.extent[2])
         axes[0].set_ylim(args.extent[1], args.extent[3])
 
-        # topography colorbar
-        fig.colorbar(matplotlib.cm.ScalarMappable(cmscale_t, cmap_t), cax=axes[1])
-
         # solution depth colorbar
-        fig.colorbar(matplotlib.cm.ScalarMappable(cmscale_s, cmap_s), cax=axes[2])
+        fig.colorbar(matplotlib.cm.ScalarMappable(cmscale_s, cmap_s), cax=axes[1])
+
+        if not args.no_topo:
+            # topography colorbar
+            fig.colorbar(matplotlib.cm.ScalarMappable(cmscale_t, cmap_t), cax=axes[2])
 
         fig.suptitle("T = {} sec".format(soln.state.t))  # title
         fig.savefig(args.dest_dir.joinpath("frame{:05d}.png".format(fno)))  # save
