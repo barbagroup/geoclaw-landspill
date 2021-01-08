@@ -105,6 +105,14 @@ def create_case(tmp_path_factory):
     return case_dir
 
 
+def test_no_setrun(tmpdir):
+    """Test expected error raised when no setrun.py exists."""
+    sys.argv = ["geoclaw-landspill", "run", str(tmpdir)]
+    with pytest.raises(FileNotFoundError) as err:
+        gclandspill.__main__.main()
+    assert err.type == FileNotFoundError
+
+
 def test_run(create_case):
     """Test if the run succeeded."""
     case_dir = create_case

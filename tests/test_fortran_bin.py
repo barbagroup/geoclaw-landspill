@@ -15,39 +15,10 @@ from pathlib import Path
 import gclandspill
 
 
-class TestBin:
-    """Collection of tests for the Fortran binary geoclaw-landspill-bin."""
-
-    exe = Path(gclandspill.__file__).parent.joinpath("bin", "geoclaw-landspill-bin")
-
-    def test_bin_exist(self):
-        """Test if the binary geoclaw-landspill-bin exists at the correct path."""
-        assert self.exe.is_file()
-
-    def test_bin_executable(self):
-        """Test if the binary geoclaw-landspill-bin is executable."""
-        assert os.access(self.exe, os.X_OK)
-
-    def test_bin_run_1(self, tmpdir):
-        """Test if the executable can run and returns expected errors."""
-        cwd = os.getcwd()
-        os.chdir(tmpdir)
-        results = subprocess.run([self.exe], capture_output=True, check=True)
-        assert results.stdout == b"*** in opendatafile, file not found:claw.data\n"
-        os.chdir(cwd)
-
-    def test_bin_run_2(self, tmpdir):
-        """Test if the executable can run up to the desired final time."""
-        cwd = os.getcwd()
-        os.chdir(tmpdir)
-        _create_data_2()
-        results = subprocess.run([self.exe], capture_output=True, check=True)
-        results = re.search(r"Done integrating to time\s+2.0+", results.stdout.decode("utf-8"))
-        assert results is not None
-        os.chdir(cwd)
+exe = Path(gclandspill.__file__).parent.joinpath("bin", "geoclaw-landspill-bin")
 
 
-def _create_data_2():
+def create_data():
     """Create run data for TestBin.test_bin_run_2."""
     # pylint: disable=no-member, too-many-statements
 
@@ -117,3 +88,33 @@ def _create_data_2():
         fileobj.write("\n")
         for _ in range(4):
             fileobj.write("0.0 0.0 0.0 0.0\n")
+
+
+def test_bin_exist():
+    """Test if the binary geoclaw-landspill-bin exists at the correct path."""
+    assert exe.is_file()
+
+
+def test_bin_executable():
+    """Test if the binary geoclaw-landspill-bin is executable."""
+    assert os.access(exe, os.X_OK)
+
+
+def test_bin_run_1(tmpdir):
+    """Test if the executable can run and returns expected errors."""
+    cwd = os.getcwd()
+    os.chdir(tmpdir)
+    results = subprocess.run([exe], capture_output=True, check=True)
+    assert results.stdout == b"*** in opendatafile, file not found:claw.data\n"
+    os.chdir(cwd)
+
+
+def test_bin_run_2(tmpdir):
+    """Test if the executable can run up to the desired final time."""
+    cwd = os.getcwd()
+    os.chdir(tmpdir)
+    create_data()
+    results = subprocess.run([exe], capture_output=True, check=True)
+    results = re.search(r"Done integrating to time\s+2.0+", results.stdout.decode("utf-8"))
+    assert results is not None
+    os.chdir(cwd)
