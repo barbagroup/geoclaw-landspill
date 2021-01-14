@@ -40,6 +40,11 @@ class NoFrameDataError(Exception):
     pass  # pylint: disable=unnecessary-pass
 
 
+class FrictionModelError(Exception):
+    """An error to raise when both Manning and Darcy-Weisbach models are enabled."""
+    pass  # pylint: disable=unnecessary-pass
+
+
 class DatetimeCtrlParams(TypedDict):
     """A type definition for the `dict` controlling the timestamps."""
     apply_datetime_stamp = bool

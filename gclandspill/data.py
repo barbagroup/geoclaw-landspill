@@ -7,17 +7,149 @@
 # Distributed under terms of the BSD 3-Clause license.
 
 
-"""Classes representing parameters for geoclaw-landspill runs
+"""Classes representing parameters for geoclaw-landspill runs.
 """
 import os
-import gclandspill.clawutil.data
-# pylint: disable=no-member, attribute-defined-outside-init, fixme
-# TODO: merge the friction models of GeoClaw and landspill
-# TODO: merge dry_tol and dry_tolerance from GeoClaw and landspill
+from functools import reduce as _reduce
+from gclandspill import clawutil as _clawutil
+from gclandspill import _misc
+
+
+class ClawRunData(_clawutil.data.ClawRunData):
+    """A modified version of ClawRunData for geoclaw-landspill.
+
+    This ClawRunData has an additional LandSpillData instance. Also, the following default values are modified:
+
+        # core classical clawpack configuration
+        self.clawdata.num_eqn = 2
+        self.clawdata.num_waves = 3
+        self.clawdata.num_aux = 2
+        self.clawdata.output_format = 3  # binary
+        self.clawdata.output_aux_components = "all"
+        self.clawdata.output_aux_onlyonce = False
+        self.clawdata.dt_initial = None
+        self.clawdata.dt_max = 5.0
+        self.clawdata.cfl_max = 0.95
+        self.clawdata.steps_max = 100000
+        self.clawdata.verbosity = 5
+        self.clawdata.verbosity_regrid = 5
+        self.clawdata.source_split = 1  # godunov
+        self.clawdata.limiter = [4, 4, 4]  # use "mc" limiter for all equations
+        self.clawdata.use_fwaves = True
+        self.clawdata.bc_lower = [1, 1]
+        self.clawdata.bc_upper = [1, 1]
+
+        # AMRClaw configuration
+        self.amrdata.amr_levels_max = 2
+        self.amrdata.refinement_ratios_x = [4]
+        self.amrdata.refinement_ratios_y = [4]
+        self.amrdata.refinement_ratios_t = [4]
+        self.amrdata.aux_type = ["center", "center"]  # aux variables are defined at cell centers
+        self.amrdata.regrid_interval = 1
+        self.amrdata.verbosity_regrid = 5
+
+        # GeoClaw basic configuration
+        self.geo_data.gravity = 9.81
+        self.geo_data.coriolis_forcing = False
+        self.geo_data.sea_level = -1000.
+        self.geo_data.dry_tolerance = 1e-4
+        self.geo_data.friction_forcing = False  # turned off in favor of Darcy-Weisbach friction
+
+        # GeoClaw refinement mechanism
+        self.refinement_data.wave_tolerance = 1.0e-5
+        self.refinement_data.speed_tolerance = [1e-5] * 6
+        self.refinement_data.variable_dt_refinement_ratios = True
+    """
+
+    def __init__(self):
+        # pylint: disable=no-member
+        super().__init__("geoclaw", 2)  # to first get attributes from geoclaw and with dimension 2
+
+        # modify attributes for geoclaw-landspill
+        self.pkg = "geoclaw-landspill"
+        self.xclawcmd = "geoclaw-landspill-bin"
+
+        # append a landspill data instance to the data object
+        self.add_data(LandSpillData(), 'landspill_data')
+
+        # core classical clawpack configuration
+        self.clawdata.num_eqn = 3
+        self.clawdata.num_waves = 3
+        self.clawdata.num_aux = 2
+        self.clawdata.output_format = 3  # binary
+        self.clawdata.output_aux_components = "all"
+        self.clawdata.output_aux_onlyonce = False
+        self.clawdata.dt_initial = None
+        self.clawdata.dt_max = 5.0
+        self.clawdata.cfl_max = 0.95
+        self.clawdata.steps_max = 100000
+        self.clawdata.verbosity = 5
+        self.clawdata.verbosity_regrid = 5
+        self.clawdata.source_split = 1  # godunov
+        self.clawdata.limiter = [4, 4, 4]  # use "mc" limiter for all equations
+        self.clawdata.use_fwaves = True
+        self.clawdata.bc_lower = [1, 1]
+        self.clawdata.bc_upper = [1, 1]
+
+        # AMRClaw configuration
+        self.amrdata.amr_levels_max = 2
+        self.amrdata.refinement_ratios_x = [4]
+        self.amrdata.refinement_ratios_y = [4]
+        self.amrdata.refinement_ratios_t = [4]
+        self.amrdata.aux_type = ["center", "center"]  # aux variables are defined at cell centers
+        self.amrdata.regrid_interval = 1
+        self.amrdata.verbosity_regrid = 5
+
+        # GeoClaw basic configuration
+        self.geo_data.gravity = 9.81
+        self.geo_data.coriolis_forcing = False
+        self.geo_data.sea_level = -1000.
+        self.geo_data.dry_tolerance = 1e-4
+        self.geo_data.friction_forcing = False  # turned off in favor of Darcy-Weisbach friction
+
+        # GeoClaw refinement mechanism
+        self.refinement_data.wave_tolerance = 1.0e-5
+        self.refinement_data.speed_tolerance = [1e-5] * 6
+        self.refinement_data.variable_dt_refinement_ratios = True
+
+    def write(self, out_dir=""):
+
+        # check and set some automatically determined values
+        self._check()
+
+        super().write(out_dir)
+
+    def _check(self):
+        """Check and set some automatically determined values."""
+        # pylint: disable=no-member
+
+        # automatically determine dt_initial
+        if self.clawdata.dt_initial is None:
+            cell_area = \
+                (self.clawdata.upper[0] - self.clawdata.lower[0]) * \
+                (self.clawdata.upper[1] - self.clawdata.lower[1]) / \
+                (self.clawdata.num_cells[0] * self.clawdata.num_cells[1])
+            cell_area /= _reduce(lambda x, y: x*y, self.amrdata.refinement_ratios_x[:self.amrdata.amr_levels_max], 1)
+            cell_area /= _reduce(lambda x, y: x*y, self.amrdata.refinement_ratios_y[:self.amrdata.amr_levels_max], 1)
+            vrate = self.landspill_data.point_sources.point_sources[0][-1][0]
+
+            self.clawdata.dt_initial = 0.3 * cell_area / vrate
+
+        if self.landspill_data.update_tol is None:
+            self.landspill_data.update_tol = self.geo_data.dry_tolerance
+
+        if self.landspill_data.darcy_weisbach_friction.type != 0 and self.geo_data.friction_forcing:
+            raise _misc.FrictionModelError("Both Manning and Darcy-Weisbach models are enabled.")
+
+        if self.landspill_data.darcy_weisbach_friction.dry_tol is None:
+            self.landspill_data.darcy_weisbach_friction.dry_tol = self.geo_data.dry_tolerance
+
+        if self.landspill_data.darcy_weisbach_friction.friction_tol is None:
+            self.landspill_data.darcy_weisbach_friction.friction_tol = self.geo_data.friction_depth
 
 
 # Land-spill data
-class LandSpillData(gclandspill.clawutil.data.ClawData):
+class LandSpillData(_clawutil.data.ClawData):
     """Data object describing land spill simulation configurations"""
 
     def __init__(self):
@@ -38,7 +170,7 @@ class LandSpillData(gclandspill.clawutil.data.ClawData):
         self.add_attribute('density', 926.6)  # unit: kg / m^3
 
         # extra parameters to hack the AMR algorithms for landspill applications
-        self.add_attribute("update_tol", 0.0)
+        self.add_attribute("update_tol", None)
         self.add_attribute("refine_tol", 0.0)
 
         # add point source data
@@ -83,29 +215,29 @@ class LandSpillData(gclandspill.clawutil.data.ClawData):
         # output point sources data
         self.data_write('point_sources_file',
                         description='File name of point sources settings')
-        self.point_sources.write(os.path.join(base, self.point_sources_file))
+        self.point_sources.write(os.path.join(base, self.point_sources_file))  # pylint: disable=no-member
 
         # output Darcy-Weisbach data
         self.data_write('darcy_weisbach_file',
                         description='File name of Darcy-Weisbach settings')
-        self.darcy_weisbach_friction.write(os.path.join(base, self.darcy_weisbach_file))
+        self.darcy_weisbach_friction.write(os.path.join(base, self.darcy_weisbach_file))  # pylint: disable=no-member
 
         # output hydroological feature data
         self.data_write('hydro_feature_file',
                         description='File name of hydrological feature settings')
-        self.hydro_features.write(os.path.join(base, self.hydro_feature_file))
+        self.hydro_features.write(os.path.join(base, self.hydro_feature_file))  # pylint: disable=no-member
 
         # output evaporation data
         self.data_write('evaporation_file',
                         description='File name of evaporation settings')
-        self.evaporation.write(os.path.join(base, self.evaporation_file))
+        self.evaporation.write(os.path.join(base, self.evaporation_file))  # pylint: disable=no-member
 
         # close the output file
         self.close_data_file()
 
 
 # Point source data
-class PointSourceData(gclandspill.clawutil.data.ClawData):
+class PointSourceData(_clawutil.data.ClawData):
     """Data object describing point sources"""
 
     def __init__(self):
@@ -132,7 +264,7 @@ class PointSourceData(gclandspill.clawutil.data.ClawData):
         self.data_write('n_point_sources', description='Number of point sources')
 
         # write point sources
-        for i, pts in enumerate(self.point_sources):
+        for i, pts in enumerate(self.point_sources):  # pylint: disable=no-member
             self.data_write()  # a blank line
             self.data_write("id", i, description="ID of this point source")
             self.data_write("coord", pts[0], description="coordinates")
@@ -145,6 +277,7 @@ class PointSourceData(gclandspill.clawutil.data.ClawData):
 
     def _check(self):
         """Check if the data are consistent"""
+        # pylint: disable=no-member
 
         # check if the number of data set match n_point_sources
         assert self.n_point_sources == len(self.point_sources),  \
@@ -174,7 +307,7 @@ class PointSourceData(gclandspill.clawutil.data.ClawData):
 
 
 # Darcy-Weisbach data
-class DarcyWeisbachData(gclandspill.clawutil.data.ClawData):
+class DarcyWeisbachData(_clawutil.data.ClawData):
     """Data object describing Darcy-Weisbach friction model"""
 
     def __init__(self):
@@ -192,11 +325,11 @@ class DarcyWeisbachData(gclandspill.clawutil.data.ClawData):
         # 6: two-regime coefficient model: laminar + Colebrook-White
         self.add_attribute('type', 0)
 
-        # friction_tol, the same as friction_tol in GeoClaw.
-        self.add_attribute('friction_tol', 1e6)
+        # friction_tol, the same as the friction_depth in GeoClaw.
+        self.add_attribute('friction_tol', None)
 
         # dry_tol, the same as dry_tolerance in GeoClaw.
-        self.add_attribute('dry_tol', 1e-6)
+        self.add_attribute('dry_tol', None)
 
         # single constant coefficient.
         self.add_attribute('coefficient', 0.25)
@@ -224,6 +357,7 @@ class DarcyWeisbachData(gclandspill.clawutil.data.ClawData):
 
     def write(self, out_file='darcy_weisbach.data', data_source="setrun.py"):
         """Write out the data file to the path given"""
+        # pylint: disable=access-member-before-definition, attribute-defined-outside-init, no-member
 
         # check data consistency
         self._check()
@@ -285,6 +419,7 @@ class DarcyWeisbachData(gclandspill.clawutil.data.ClawData):
 
     def _check(self):
         """Check if the data are consistent"""
+        # pylint: disable=no-member
 
         assert isinstance(self.type, int), "Type should be an integer."
 
@@ -342,7 +477,7 @@ class DarcyWeisbachData(gclandspill.clawutil.data.ClawData):
 
 
 # Hydrologic feature data
-class HydroFeatureData(gclandspill.clawutil.data.ClawData):
+class HydroFeatureData(_clawutil.data.ClawData):
     """Data object describing hydrologic features"""
 
     def __init__(self):
@@ -360,11 +495,11 @@ class HydroFeatureData(gclandspill.clawutil.data.ClawData):
         self.open_data_file(out_file, data_source)
 
         # write number of files
-        self.data_write('n_files', len(self.files),
+        self.data_write('n_files', len(self.files),  # pylint: disable=no-member
                         description='Number of hydro files')
 
         # write file names line by line
-        for i, single_file in enumerate(self.files):
+        for i, single_file in enumerate(self.files):  # pylint: disable=no-member
             # relative path will be relative to the folder containing `out_file` (following how
             # geoclaw handles topo files)
             if not os.path.isabs(single_file):
@@ -376,7 +511,7 @@ class HydroFeatureData(gclandspill.clawutil.data.ClawData):
 
 
 # Evaporation data
-class EvaporationData(gclandspill.clawutil.data.ClawData):
+class EvaporationData(_clawutil.data.ClawData):
     """Data object describing evaporation"""
 
     def __init__(self):
@@ -406,10 +541,10 @@ class EvaporationData(gclandspill.clawutil.data.ClawData):
         self.data_write('type', description='Evaporation type')
 
         # number of coefficients
-        self.data_write('n_coefficients', len(self.coefficients),
+        self.data_write('n_coefficients', len(self.coefficients),  # pylint: disable=no-member
                         description='Number of evaporation coefficients.')
 
-        for i, coeff in enumerate(self.coefficients):
+        for i, coeff in enumerate(self.coefficients):  # pylint: disable=no-member
             self.data_write('C{}'.format(i), coeff,
                             description='Coefficient {}'.format(i))
 
@@ -419,5 +554,5 @@ class EvaporationData(gclandspill.clawutil.data.ClawData):
     def _check(self):
         """Check if the data are consistent"""
 
-        assert isinstance(self.type, int), "Evaporation type should be an integer."
-        assert self.type in [0, 1, 2], "Evaporation type should be in [0, 1, 2]"
+        assert isinstance(self.type, int), "Evaporation type should be an integer."  # pylint: disable=no-member
+        assert self.type in [0, 1, 2], "Evaporation type should be in [0, 1, 2]"  # pylint: disable=no-member
