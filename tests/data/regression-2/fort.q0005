@@ -16,7 +16,7 @@
     0.1000000000000000E+01    dx
     0.1000000000000000E+01    dy
 
-     2                 grid_number
+     3                 grid_number
      2                 AMR_level
     32                 mx
     52                 my
@@ -25,7 +25,7 @@
     0.1000000000000000E+01    dx
     0.1000000000000000E+01    dy
 
-     6                 grid_number
+     7                 grid_number
      2                 AMR_level
     32                 mx
     52                 my

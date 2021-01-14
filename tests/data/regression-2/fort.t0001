@@ -1,6 +1,6 @@
     0.13000000E+02    time
      4                 meqn
-     2                 ngrids
+     3                 ngrids
      2                 naux
      2                 ndim
      2                 nghost
