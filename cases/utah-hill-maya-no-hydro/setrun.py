@@ -51,8 +51,6 @@ def setrun():
 
     # Darcy-Weisbach friction
     rundata.landspill_data.darcy_weisbach_friction.type = 4
-    rundata.landspill_data.darcy_weisbach_friction.dry_tol = 1e-4
-    rundata.landspill_data.darcy_weisbach_friction.friction_tol = 1e6
     rundata.landspill_data.darcy_weisbach_friction.default_roughness = 0.0
     rundata.landspill_data.darcy_weisbach_friction.filename = "roughness.txt"
 
