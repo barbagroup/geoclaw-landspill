@@ -1,0 +1,37 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": [
+    {
+      "@id": "https://orcid.org/0000-0001-6330-2709",
+      "@type": "Person",
+      "email": "pychuang@gwu.edu",
+      "name": "Pi-Yueh Chuang",
+      "affiliation": "Department of Mechanical and Aerospace Engineering, The George Washington University, Washington, DC, USA"
+    },
+    {
+      "@id": "",
+      "@type": "Person",
+      "email": "Tracy.Thorleifson@g2-is.com",
+      "name": "Tracy Thorleifson",
+      "affiliation": "G2 Integrated Solutions, Houston, TX, USA"
+    },
+    {
+      "@id": "http://orcid.org/0000-0001-5812-2711",
+      "@type": "Person",
+      "email": "labarba@gwu.edu",
+      "name": "Lorena A. Barba",
+      "affiliation": "Department of Mechanical and Aerospace Engineering, The George Washington University, Washington, DC, USA"
+    }
+  ],
+  "identifier": "",
+  "codeRepository": "https://github.com/barbagroup/geoclaw-landspill",
+  "datePublished": "2021-01-11",
+  "dateModified": "2021-01-11",
+  "dateCreated": "2021-01-11",
+  "description": "Oil land-spill and overland flow simulator for pipeline rupture events",
+  "keywords": "geoclaw, overland-flow, pipeline, shallow-water-equations, pipeline-ruptures, land-spill",
+  "license": "BSD 3-Clause",
+  "title": "geoclaw-landspill",
+  "version": "v1.0.dev3"
+}

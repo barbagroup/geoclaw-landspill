@@ -32,7 +32,9 @@ ruptures. These features include:
 ## Documentation
 1. [Dependencies, installation, and tests](doc/deps_install_tests.md)
 2. [Usage](doc/usage.md)
-3. [Containers: Docker and Singularity](doc/container.md)
+3. [Configuration file: `setrun.py`](doc/configuration.md)
+3. [Example cases](cases/README.md)
+4. [Containers: Docker and Singularity](doc/container.md)
 
 ------------------------------------------------------------------------
 ## Quick start

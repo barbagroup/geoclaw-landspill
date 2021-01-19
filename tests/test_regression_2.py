@@ -8,12 +8,14 @@
 
 """Regression test 2."""
 # pylint: disable=redefined-outer-name
+import os
 import sys
 import csv
 import pathlib
 import numpy
 import pytest
 import rasterio
+import matplotlib
 import matplotlib.pyplot
 import gclandspill.__main__
 import gclandspill.pyclaw
@@ -24,62 +26,34 @@ def create_case(tmp_path_factory):
     """A pytest fixture to make a temp case available across different tests."""
     # pylint: disable=invalid-name
 
+    # force to use only 4 threads
+    os.environ["OMP_NUM_THREADS"] = "4"
+
+    # to avoid wayland session or none-X environment
+    matplotlib.use("agg")
+
     case_dir = tmp_path_factory.mktemp("regression-test-2")
 
     content = (
         "#! /usr/bin/env python\n"
         "import gclandspill\n"
-        "def setrun(prog='geoclaw'):\n"
-        "\trundata = gclandspill.clawutil.data.ClawRunData('geoclaw', 2)\n"
-        "\trundata.add_data(gclandspill.data.LandSpillData(), 'landspill_data')\n"
-        "\trundata.clawdata.num_dim = 2\n"
+        "def setrun():\n"
+        "\trundata = gclandspill.data.ClawRunData()\n"
         "\trundata.clawdata.lower[:] = [0.0, 0.0]\n"
         "\trundata.clawdata.upper[:] = [152.0, 60.0]\n"
         "\trundata.clawdata.num_cells[:] = [38, 15]\n"
-        "\trundata.clawdata.num_eqn = 3\n"
-        "\trundata.clawdata.num_aux = 2\n"
         "\trundata.clawdata.output_style = 1\n"
         "\trundata.clawdata.num_output_times = 5\n"
         "\trundata.clawdata.tfinal = 65\n"
         "\trundata.clawdata.output_t0 = True\n"
-        "\trundata.clawdata.output_format = 'binary'\n"
-        "\trundata.clawdata.output_aux_components = 'all'\n"
-        "\trundata.clawdata.output_aux_onlyonce = False\n"
-        "\trundata.clawdata.dt_variable = True\n"
         "\trundata.clawdata.dt_initial = 0.6\n"
         "\trundata.clawdata.dt_max = 4.0\n"
-        "\trundata.clawdata.transverse_waves = 2\n"
-        "\trundata.clawdata.num_waves = 3\n"
-        "\trundata.clawdata.limiter = ['mc', 'mc', 'mc']\n"
-        "\trundata.clawdata.use_fwaves = True\n"
-        "\trundata.clawdata.source_split = 'godunov'\n"
-        "\trundata.clawdata.num_ghost = 2\n"
-        "\trundata.clawdata.bc_lower[:] = [1, 1]\n"
-        "\trundata.clawdata.bc_upper[:] = [1, 1]\n"
-        "\trundata.amrdata.amr_levels_max = 2\n"
-        "\trundata.amrdata.refinement_ratios_x = [4]\n"
-        "\trundata.amrdata.refinement_ratios_y = [4]\n"
-        "\trundata.amrdata.refinement_ratios_t = [4]\n"
-        "\trundata.amrdata.aux_type = ['center', 'center']\n"
-        "\trundata.geo_data.gravity = 9.81\n"
-        "\trundata.geo_data.coriolis_forcing = False\n"
-        "\trundata.geo_data.sea_level = -10.0\n"
-        "\trundata.geo_data.dry_tolerance = 1.e-4\n"
-        "\trundata.geo_data.friction_forcing = False\n"
-        "\trundata.refinement_data.wave_tolerance = 1.e-5\n"
-        "\trundata.refinement_data.speed_tolerance = [1e-8]\n"
-        "\trundata.refinement_data.variable_dt_refinement_ratios = True\n"
         "\trundata.topo_data.topofiles.append([3, 'topo.asc'])\n"
         "\trundata.landspill_data.ref_mu = 0.6512\n"
-        "\trundata.landspill_data.ref_temperature = 15.\n"
-        "\trundata.landspill_data.ambient_temperature = 25.\n"
         "\trundata.landspill_data.density = 800.\n"
-        "\trundata.landspill_data.update_tol = rundata.geo_data.dry_tolerance\n"
         "\trundata.landspill_data.point_sources.n_point_sources = 1\n"
         "\trundata.landspill_data.point_sources.point_sources.append([[20., 30.], 1, [1800.], [0.5]])\n"
         "\trundata.landspill_data.darcy_weisbach_friction.type = 4\n"
-        "\trundata.landspill_data.darcy_weisbach_friction.dry_tol = 1e-4\n"
-        "\trundata.landspill_data.darcy_weisbach_friction.friction_tol = 1e6\n"
         "\trundata.landspill_data.darcy_weisbach_friction.default_roughness = 0.0\n"
         "\trundata.landspill_data.darcy_weisbach_friction.filename = 'roughness.asc'\n"
         "\trundata.landspill_data.hydro_features.files.append('hydro.asc')\n"
@@ -192,7 +166,7 @@ def test_raw_result(create_case, frame):
     case_dir = create_case
 
     ref = gclandspill.pyclaw.Solution()
-    ref.read(frame, pathlib.Path(__file__).parent.joinpath("data", "regression-2"), "binary",  read_aux=False)
+    ref.read(frame, pathlib.Path(__file__).parent.joinpath("data", "regression-2"), "binary",  read_aux=True)
 
     soln = gclandspill.pyclaw.Solution()
     soln.read(frame, case_dir.joinpath("_output"), "binary",  read_aux=False)

@@ -7,7 +7,7 @@
     0.4000000000000000E+01    dx
     0.4000000000000000E+01    dy
 
-     4                 grid_number
+     5                 grid_number
      2                 AMR_level
     56                 mx
     48                 my

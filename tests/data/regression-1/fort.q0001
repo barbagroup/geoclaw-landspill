@@ -34,7 +34,7 @@
     0.1000000000000000E-02    dx
     0.1000000000000000E-02    dy
 
-     2                 grid_number
+     3                 grid_number
      2                 AMR_level
     32                 mx
     32                 my
