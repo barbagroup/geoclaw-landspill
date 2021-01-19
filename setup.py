@@ -20,7 +20,7 @@ meta = dict(
     name="geoclaw-landspill",
     author="Pi-Yueh Chuang",
     author_email="pychuang@gwu.edu",
-    url="https://github.com/barba/geoclaw-landspill",
+    url="https://github.com/barbagroup/geoclaw-landspill",
     keywords=["landspill", "overland flow", "pipeline", "geoclaw", "clawpack"],
     license="BSD 3-Clause License",
 )
