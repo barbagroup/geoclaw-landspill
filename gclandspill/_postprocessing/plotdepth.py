@@ -274,6 +274,8 @@ def plot_topo_on_ax(
             Customize the limits of the colormap. If not provided, use the full range.
         nodata : int
             Indicates the `nodata` values in the topography files. Default value is -9999.
+        alpha : float
+            Opacity.
 
     Returns
     -------
@@ -292,6 +294,7 @@ def plot_topo_on_ax(
     degs = [45, 25] if "degs" not in kwargs else kwargs["degs"]
     clims = None if "clims" not in kwargs else kwargs["clims"]
     nodata = -9999 if "nodata" not in kwargs else kwargs["nodata"]
+    alpha = 0.7 if "alpha" not in kwargs else kwargs["alpha"]
 
     # use mosaic raster to obtain interpolated terrain
     rasters = [rasterio.open(topo, "r") for topo in topo_files]
@@ -334,7 +337,7 @@ def plot_topo_on_ax(
             dst, cmap, cmscale, vert_exag=5, fraction=1,
             dx=affine._scaling[0], dy=affine._scaling[1]  # pylint: disable=protected-access
         ),
-        extent=rasterio.plot.plotting_extent(dst, affine), alpha=0.7
+        extent=rasterio.plot.plotting_extent(dst, affine), alpha=alpha
     )
 
     return axes, img, cmap, cmscale
