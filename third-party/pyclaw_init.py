@@ -13,6 +13,8 @@ from . import util
 from . import geometry
 from . import state
 from . import solution
+from . import gauges
 from . import fileio
 from .state import State
 from .solution import Solution
+from .gauges import GaugeSolution
