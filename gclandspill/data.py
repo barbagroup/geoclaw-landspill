@@ -113,6 +113,7 @@ class ClawRunData(_clawutil.data.ClawRunData):
         self.refinement_data.variable_dt_refinement_ratios = True
 
     def write(self, out_dir=""):
+        """Write out the data file to the path given"""
 
         # check and set some automatically determined values
         self._check()
@@ -125,15 +126,20 @@ class ClawRunData(_clawutil.data.ClawRunData):
 
         # automatically determine dt_initial
         if self.clawdata.dt_initial is None:
-            cell_area = \
-                (self.clawdata.upper[0] - self.clawdata.lower[0]) * \
-                (self.clawdata.upper[1] - self.clawdata.lower[1]) / \
-                (self.clawdata.num_cells[0] * self.clawdata.num_cells[1])
-            cell_area /= _reduce(lambda x, y: x*y, self.amrdata.refinement_ratios_x[:self.amrdata.amr_levels_max], 1)
-            cell_area /= _reduce(lambda x, y: x*y, self.amrdata.refinement_ratios_y[:self.amrdata.amr_levels_max], 1)
-            vrate = self.landspill_data.point_sources.point_sources[0][-1][0]
+            if self.landspill_data.point_sources.n_point_sources > 0:
+                cell_area = \
+                    (self.clawdata.upper[0] - self.clawdata.lower[0]) * \
+                    (self.clawdata.upper[1] - self.clawdata.lower[1]) / \
+                    (self.clawdata.num_cells[0] * self.clawdata.num_cells[1])
+                cell_area /= _reduce(
+                    lambda x, y: x*y, self.amrdata.refinement_ratios_x[:self.amrdata.amr_levels_max], 1)
+                cell_area /= _reduce(
+                    lambda x, y: x*y, self.amrdata.refinement_ratios_y[:self.amrdata.amr_levels_max], 1)
+                vrate = self.landspill_data.point_sources.point_sources[0][-1][0]
 
-            self.clawdata.dt_initial = 0.3 * cell_area / vrate
+                self.clawdata.dt_initial = 0.3 * cell_area / vrate
+            else:
+                self.clawdata.dt_initial = 1e-5
 
         if self.landspill_data.update_tol is None:
             self.landspill_data.update_tol = self.geo_data.dry_tolerance
