@@ -99,11 +99,16 @@ QGIS and ArcGIS should be able to read the resulting NetCDF raster file.
 ------------------------------------------------------------------------
 ## Third-party codes and licenses
 
-* amrclaw: https://github.com/clawpack/amrclaw ([LICENSE](third-party/amrclaw/LICENSE))
-* geoclaw: https://github.com/clawpack/geoclaw ([LICENSE](third-party/geoclaw/LICENSE))
-* pyclaw: https://github.com/clawpack/pyclaw ([LICENSE](third-party/pyclaw/LICENSE))
-* clawutil: https://github.com/clawpack/clawutil ([LICENSE](third-party/clawutil/LICENSE))
-* riemann: https://github.com/clawpack/riemann ([LICENSE](third-party/riemann/LICENSE))
+* amrclaw: https://github.com/clawpack/amrclaw
+  ([BSD 3-Clause License](https://github.com/clawpack/amrclaw/blob/ee85c1fe178ec319a8403503e779d3f8faf22840/LICENSE))
+* geoclaw: https://github.com/clawpack/geoclaw
+  ([BSD 3-Clause License](https://github.com/clawpack/geoclaw/blob/3593cb1b418fd52739c186a8845a288037c8f575/LICENSE))
+* pyclaw: https://github.com/clawpack/pyclaw
+  ([BSD 3-Clause License](https://github.com/clawpack/pyclaw/blob/a85a01a5f20be1a18dde70b7bb37dc1cdcbd0b26/LICENSE))
+* clawutil: https://github.com/clawpack/clawutil
+  ([BSD 3-Clause License](https://github.com/clawpack/clawutil/blob/116ffb792e889fbf0854d7ac599657039d7b1f3e/LICENSE))
+* riemann: https://github.com/clawpack/riemann
+  ([BSD 3-Clause License](https://github.com/clawpack/riemann/blob/597824c051d56fa0c8818e00d740867283329b24/LICENSE))
 
 ------------------------------------------------------------------------
 ## Contact
