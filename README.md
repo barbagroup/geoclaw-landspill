@@ -4,6 +4,7 @@ geoclaw-landspill
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/barbagroup/geoclaw-landspill/raw/master/LICENSE)
 [![Travis CI](https://img.shields.io/travis/com/barbagroup/geoclaw-landspill/master?label=Travis%20CI)](https://travis-ci.com/barbagroup/geoclaw-landspill)
 [![GitHub Action CI](https://img.shields.io/github/workflow/status/barbagroup/geoclaw-landspill/CI/master?label=GitHub%20Action%20CI)](https://github.com/barbagroup/geoclaw-landspill/actions?query=workflow%3ACI)
+[![status](https://joss.theoj.org/papers/fb7b012799a70c9b4c55eb4bb0f36f97/status.svg)](https://joss.theoj.org/papers/fb7b012799a70c9b4c55eb4bb0f36f97)
 
 ***Note: if looking for content of `geoclaw-landspill-cases`, please checkout tag
 `v0.1`. This repository has been converted to a fully working solver package.***
