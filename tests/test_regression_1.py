@@ -167,6 +167,7 @@ def test_plotdepth(create_case):
         assert file_path.is_file(), "{} not found".format(file_path)
 
 
+@pytest.mark.skipif(matplotlib.__version__ != "3.3.3", reason="only check against matplotlib v3.3.3")
 @pytest.mark.parametrize("frame", list(range(6)))
 def test_png(create_case, frame):
     """Test if the RGB values of created figures match."""
