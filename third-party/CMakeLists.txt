@@ -176,6 +176,7 @@ install(FILES "${PYCLAW_PYTHON}/util.py" DESTINATION "${DEST}/pyclaw")
 install(FILES "${PYCLAW_PYTHON}/state.py" DESTINATION "${DEST}/pyclaw")
 install(FILES "${PYCLAW_PYTHON}/solution.py" DESTINATION "${DEST}/pyclaw")
 install(FILES "${PYCLAW_PYTHON}/geometry.py" DESTINATION "${DEST}/pyclaw")
+install(FILES "${PYCLAW_PYTHON}/gauges.py" DESTINATION "${DEST}/pyclaw")
 install(DIRECTORY "${PYCLAW_PYTHON}/fileio" DESTINATION "${DEST}/pyclaw")
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/pyclaw_init.py" DESTINATION "${DEST}/pyclaw" RENAME "__init__.py")
 

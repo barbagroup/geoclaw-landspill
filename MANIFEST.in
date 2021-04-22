@@ -168,6 +168,7 @@ include third-party/pyclaw/src/pyclaw/util.py
 include third-party/pyclaw/src/pyclaw/state.py
 include third-party/pyclaw/src/pyclaw/solution.py
 include third-party/pyclaw/src/pyclaw/geometry.py
+include third-party/pyclaw/src/pyclaw/gauges.py
 graft third-party/pyclaw/src/pyclaw/fileio
 
 # install clawutil's Python module
