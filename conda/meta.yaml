@@ -1,5 +1,5 @@
 {% set name = "geoclaw-landspill" %}
-{% set version = "1.0.dev3" %}
+{% set version = "1.0.dev4" %}
 
 package:
   name: "{{ name|lower }}"
