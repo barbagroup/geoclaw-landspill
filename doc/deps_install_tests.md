@@ -46,7 +46,7 @@ As described in README, the following command creates an environment called
 `landspill`, and it has *geoclaw-landspill* installed:
 ```
 $ conda create \
-    -n landspill -c main -c conda-forge -c barbagroup \
+    -n landspill -c barbagroup -c conda-forge \
     python=3.8 geoclaw-landspill
 ```
 Once activate the environment, the executable `geoclaw-landspill` should already

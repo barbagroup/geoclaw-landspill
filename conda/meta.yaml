@@ -7,7 +7,7 @@ package:
 
 source:
   url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
-  sha256: 4f110dd4d057f0d7f02ebe476b82a4ca6f578de365c5881472102657e0a4adb0
+  sha256: fc37a636e97327fcb13d4a94d55575beaa0cf4baf50ba7fadef074a8e6f93d6f
 
 build:
   number: 0
@@ -40,7 +40,7 @@ test:
     - geoclaw-landspill --help
 
 about:
-  home: "https://github.com/barba/geoclaw-landspill"
+  home: "https://github.com/barbagroup/geoclaw-landspill"
   license: BSD 3-Clause
   license_family: BSD
   license_file: LICENSE

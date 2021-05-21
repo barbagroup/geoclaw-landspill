@@ -57,7 +57,7 @@ dependencies:
 
 ```
 $ conda create \
-    -n landspill -c main -c conda-forge -c barbagroup \
+    -n landspill -c barbagroup -c conda-forge \
     python=3.8 geoclaw-landspill
 ```
 
