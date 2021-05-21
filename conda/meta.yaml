@@ -1,0 +1,49 @@
+{% set name = "geoclaw-landspill" %}
+{% set version = "1.0.dev3" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
+  sha256: 4f110dd4d057f0d7f02ebe476b82a4ca6f578de365c5881472102657e0a4adb0
+
+build:
+  number: 0
+  entry_points:
+    - geoclaw-landspill = gclandspill.__main__:main
+  script: "{{ PYTHON }} -m pip install . -vv"
+
+requirements:
+  build:
+    - {{ compiler('fortran') }}
+  host:
+    - python {{ python }}
+    - pip >=21.0
+    - scikit-build
+  run:
+    - python >=3.7
+    - requests >=2.25.1
+    - numpy >=1.19.4
+    - matplotlib >=3.3.3
+    - netcdf4 >=1.5.5.1
+    - rasterio >=1.1.8
+    - typing_extensions >=3.7  # [py==37]
+
+test:
+  imports:
+    - gclandspill
+  commands:
+    - geoclaw-landspill --help
+
+about:
+  home: "https://github.com/barba/geoclaw-landspill"
+  license: BSD 3-Clause
+  license_family: BSD
+  license_file: LICENSE
+  summary: "A hydrocarbon overland flow simulator for pipeline rupture events."
+
+extra:
+  recipe-maintainers:
+    - Pi-Yueh Chuang <pychuang@gwu.edu>
