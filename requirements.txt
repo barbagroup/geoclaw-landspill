@@ -1,4 +1,5 @@
 six>=1.15.0
+psutil>=5.8.0
 requests>=2.25.1
 numpy>=1.19.4
 rasterio>=1.1.8

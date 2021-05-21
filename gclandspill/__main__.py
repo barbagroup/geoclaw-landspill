@@ -8,9 +8,11 @@
 
 """Main function of geoclaw-landspill.
 """
+import os
 import pathlib
 import argparse
 import subprocess
+import psutil
 import gclandspill
 from gclandspill._preprocessing import create_data
 from gclandspill._postprocessing.netcdf import convert_to_netcdf
@@ -296,6 +298,10 @@ def run(args: argparse.Namespace):
     -------
     Execution code. 0 means all good. Other values means something wrong.
     """
+
+    # set up default openmp threads
+    if "OMP_NUM_THREADS" not in os.environ:
+        os.environ["OMP_NUM_THREADS"] = "{}".format(psutil.cpu_count(False))
 
     # process path
     args.case = args.case.expanduser().resolve()
