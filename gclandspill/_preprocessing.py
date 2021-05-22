@@ -26,13 +26,18 @@ from gclandspill import _misc
 from gclandspill import clawutil
 
 
-def create_data(case_dir: os.PathLike, out_dir: os.PathLike = "_output", overwrite: bool = False):
+def create_data(
+    case_dir: os.PathLike, log_level: int = None,
+    out_dir: os.PathLike = "_output", overwrite: bool = False
+):
     """Create *.data files (and topography & hydrological files) in case folder.
 
     Arguments
     ---------
     case_dir : PathLike
         The (absolute) path to the target case folder, where setrun.py can be found.
+    log_level : int or None
+        To overwrite the log verbosity in the original config file.
     out_dir : str or PathLike
         Folder to put output files for this particular run. If not an absolute path, assume it's
         relative to `case_dir`
@@ -50,6 +55,12 @@ def create_data(case_dir: os.PathLike, out_dir: os.PathLike = "_output", overwri
     # import setrun.py
     setrun = _misc.import_setrun(case_dir)
     rundata = setrun.setrun()  # get ClawRunData object
+
+    # if we need to overwrite the log verbosity
+    if log_level is not None:
+        rundata.clawdata.verbosity = log_level
+        rundata.clawdata.verbosity_regrid = log_level
+        rundata.amrdata.verbosity_regrid = log_level
 
     # geoclaw' `TopographyData` assumes topography filenames are relative to the output folder,
     # while we assuem the filenames are always relative to the case folder. This forces us to write

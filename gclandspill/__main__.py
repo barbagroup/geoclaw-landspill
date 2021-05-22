@@ -8,9 +8,11 @@
 
 """Main function of geoclaw-landspill.
 """
+import os
 import pathlib
 import argparse
 import subprocess
+import psutil
 import gclandspill
 from gclandspill._preprocessing import create_data
 from gclandspill._postprocessing.netcdf import convert_to_netcdf
@@ -46,6 +48,9 @@ def main():
         "case", action="store", type=pathlib.Path, metavar="CASE",
         help="The path to the target case directory."
     )
+    parser_run.add_argument(
+        '--log-level', dest="log_level", action="store", type=int, default=None,
+        help='Overwrite the log verbosity in the config file `setrun.py` (default: no overwrite)')
     parser_run.set_defaults(func=run)  # set the corresponding callback for the `run` command
 
     # `createnc` command
@@ -297,6 +302,10 @@ def run(args: argparse.Namespace):
     Execution code. 0 means all good. Other values means something wrong.
     """
 
+    # set up default openmp threads
+    if "OMP_NUM_THREADS" not in os.environ:
+        os.environ["OMP_NUM_THREADS"] = "{}".format(psutil.cpu_count(False))
+
     # process path
     args.case = args.case.expanduser().resolve()
     assert args.case.is_dir()
@@ -305,7 +314,7 @@ def run(args: argparse.Namespace):
     args.output = args.case.joinpath("_output")
 
     # create *.data files, topology files, and hydrological file
-    create_data(args.case, args.output)
+    create_data(args.case, args.log_level, args.output)
 
     # get the Fortran solver binary
     solver = pathlib.Path(gclandspill.__file__).parent.joinpath("bin", "geoclaw-landspill-bin")

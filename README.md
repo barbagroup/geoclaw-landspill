@@ -5,6 +5,7 @@ geoclaw-landspill
 [![Travis CI](https://img.shields.io/travis/com/barbagroup/geoclaw-landspill/master?label=Travis%20CI)](https://travis-ci.com/barbagroup/geoclaw-landspill)
 [![GitHub Action CI](https://img.shields.io/github/workflow/status/barbagroup/geoclaw-landspill/CI/master?label=GitHub%20Action%20CI)](https://github.com/barbagroup/geoclaw-landspill/actions?query=workflow%3ACI)
 [![status](https://joss.theoj.org/papers/fb7b012799a70c9b4c55eb4bb0f36f97/status.svg)](https://joss.theoj.org/papers/fb7b012799a70c9b4c55eb4bb0f36f97)
+[![Conda](https://anaconda.org/barbagroup/geoclaw-landspill/badges/installer/conda.svg)](https://anaconda.org/barbagroup/geoclaw-landspill)
 
 ***Note: if looking for content of `geoclaw-landspill-cases`, please checkout tag
 `v0.1`. This repository has been converted to a fully working solver package.***
@@ -34,42 +35,36 @@ ruptures. These features include:
 1. [Dependencies, installation, and tests](doc/deps_install_tests.md)
 2. [Usage](doc/usage.md)
 3. [Configuration file: `setrun.py`](doc/configuration.md)
-3. [Example cases](cases/README.md)
-4. [Containers: Docker and Singularity](doc/container.md)
+4. [Example cases](cases/README.md)
+5. [Containers: Docker and Singularity](doc/container.md)
 
 ------------------------------------------------------------------------
 ## Quick start
 
-Beyond this quick start, to see more details, please refer to
-the [documentation](#documentation) section.
+We only maintain compatibility with Linux. Though using `pip` or building from
+source may still work in Mac OS or Windows (e.g., through WSL), we are not able
+to help with the installation issues on these two systems.
+
+Beyond this quick start, to see more details, please refer to the
+[documentation](#documentation) section.
 
 ### 1. Installation
 
-Install `gfortran`, `python>=3.7`, and `pip`. For example, in Arch Linux:
+The fast way to install *geoclaw-landspill* is through
+[Anaconda](https://www.anaconda.com/)'s `conda` command. The following command
+creates a conda environment (called `landspill`) and installs the package and
+dependencies:
+
 ```
-# pacman -S gcc-gfortran python python-pip
+$ conda create \
+    -n landspill -c barbagroup -c conda-forge \
+    python=3.8 geoclaw-landspill
 ```
 
-Or, in Ubuntu Focal:
-```
-# apt install gfortran python3 python3-pip
-```
-
-Then install *geoclaw-landspill* from PyPI
-```
-# pip install geoclaw-landspill
-```
-
-Using system Python and system `pip` requires root privilege and installs the
-package to the system path. To install to the user's local path without root
-privilege, instead, do
-```
-$ pip install --user geoclaw-landspill
-```
-However, if using the `--user` flag, users should make sure `pip`'s local `bin`
-path is in `PATH`.
-
-Alternatively, users can consider using virtual environments.
+Then use `conda activate landspill` or
+`source <conda installation prefix>/bin/activate landspill` to activate the
+environment. Type `geoclaw-landspill --help` in the terminal to see if
+*geoclaw-landspill* is correctly installed.
 
 ### 2. Running an example case
 
@@ -110,6 +105,11 @@ QGIS and ArcGIS should be able to read the resulting NetCDF raster file.
   ([BSD 3-Clause License](https://github.com/clawpack/clawutil/blob/116ffb792e889fbf0854d7ac599657039d7b1f3e/LICENSE))
 * riemann: https://github.com/clawpack/riemann
   ([BSD 3-Clause License](https://github.com/clawpack/riemann/blob/597824c051d56fa0c8818e00d740867283329b24/LICENSE))
+
+------------------------------------------------------------------------
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ------------------------------------------------------------------------
 ## Contact
