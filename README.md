@@ -27,7 +27,6 @@ ruptures. These features include:
 * adding Darcy-Weisbach bottom friction models with land roughness
 * adding temperature-dependent viscosity
 * recording detail locations and time of oil flowing into in-land waterbodies
-* removing unnecessary code to improve AMR performance
 * downloading topography and hydrology data automatically (the US only)
 * generating CF-1.7 compliant NetCDF files
 
