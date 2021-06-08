@@ -39,7 +39,7 @@ We added several new features and modifications to simulate the overland flow of
 * point sources with multi-stage inflow rates to mimic rupture points along a pipeline;
 * Lewis Squires Correlation for temperature-dependent flow viscosity [@mehrotra_generalized_1991];
 * Darcy-Weisbach friction model with multi-regime coefficient models (laminar, transient, and turbulent regimes) [@Yen2002] and Churchill's model [@churchill_friction-factor_1977];
-* in-land waterbody interactions;
+* inland waterbody interactions;
 * Fingas' evaporation models [@fingas_modeling_2004]; and
 * optimizations to improve performance in overland flow simulations.
 
@@ -61,7 +61,7 @@ They ease the deployment of the solver and simulations to cloud-based high-perfo
 
 In the US, between 2010 and 2017, an average of 388 hazardous liquid pipeline accidents happened per year.
 Half of accidents contaminate soil, and 41% of accidents affect areas with high consequences in either ecology or economy.
-Moreover, 85% on average of the released oil was not recovered and kept damaging the environment.
+Moreover, 85%, on average, of the released oil was not recovered and kept damaging the environment.
 [@belvederesi_statistical_2018]
 From the perspective of risk management, while pipelines are unavoidable in modern days, it is necessary to understand how a pipeline may impact the environment if any accidental release happens.
 *geoclaw-landspill* serves this purpose.
