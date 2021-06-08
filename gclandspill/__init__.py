@@ -18,5 +18,5 @@ from . import geoclaw
 from . import data
 
 # meta
-__version__ = "1.0.dev4"
+__version__ = "1.0"
 __author__ = "Pi-Yueh Chuang <pychuang@gwu.edu>"

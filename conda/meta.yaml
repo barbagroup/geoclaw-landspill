@@ -1,5 +1,5 @@
 {% set name = "geoclaw-landspill" %}
-{% set version = "1.0.dev4" %}
+{% set version = "1.0" %}
 
 package:
   name: "{{ name|lower }}"
@@ -7,7 +7,7 @@ package:
 
 source:
   url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
-  sha256: fc37a636e97327fcb13d4a94d55575beaa0cf4baf50ba7fadef074a8e6f93d6f
+  sha256: 325585e9783fc326a441c93349e7603fe8e875f289ecfb9698a592e5ab84f028
 
 build:
   number: 0

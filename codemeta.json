@@ -33,5 +33,5 @@
   "keywords": "geoclaw, overland-flow, pipeline, shallow-water-equations, pipeline-ruptures, land-spill",
   "license": "BSD 3-Clause",
   "title": "geoclaw-landspill",
-  "version": "v1.0.dev4"
+  "version": "v1.0"
 }
