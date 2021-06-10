@@ -61,8 +61,8 @@ They ease the deployment of the solver and simulations to cloud-based high-perfo
 
 In the US, between 2010 and 2017, an average of 388 hazardous liquid pipeline accidents happened per year.
 Half of accidents contaminate soil, and 41% of accidents affect areas with high consequences in either ecology or economy.
-Moreover, 85%, on average, of the released oil was not recovered and kept damaging the environment.
-[@belvederesi_statistical_2018]
+Moreover, 85%, on average, of the released oil was not recovered and kept damaging the environment
+[@belvederesi_statistical_2018].
 From the perspective of risk management, while pipelines are unavoidable in modern days, it is necessary to understand how a pipeline may impact the environment if any accidental release happens.
 *geoclaw-landspill* serves this purpose.
 It provides a free and open-source simulation tool to researchers investigating the danger, risk, and loss posed by potential pipeline accidents.
